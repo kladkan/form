@@ -25,6 +25,11 @@ switch ($_GET['testnumber']) {
     $json = file_get_contents(__DIR__ . '/tests/onservertest2.json');
     $test = json_decode($json, true);
     break;
+  default:
+  http_response_code(404);
+  echo 'Тест не найден';
+  exit;
+    break;
 }
 
 ?>
