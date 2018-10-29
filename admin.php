@@ -1,8 +1,11 @@
 <?php
+if (!file_exists('./tests/')) {
+    mkdir('./tests/');
+}
 if (!empty($_FILES['test']['name'])) {
     move_uploaded_file($_FILES['test']['tmp_name'], './tests/onserver'.$_FILES['test']['name']);
     echo "Тест успешно загружен.<br>";
-    header('Location: ./list.php');
+    //header('Location: ./list.php');
     echo '<a href="list.php">Перейти к списку тестов прямо сейчас</a>';
 } else {
     echo '<br>Ошибка загрузки теста! Вы не выбрали файл.';
