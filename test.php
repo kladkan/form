@@ -16,7 +16,6 @@ if (!empty($_POST)) {
     } else {
       echo $check[$key]['q'].' Ваш ответ: '. $_POST[substr(key($_POST), 0, -1).$key].' не верный.<br>';
     }
-    
   }
   exit;
 }
