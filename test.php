@@ -1,33 +1,30 @@
 <?php
 if (!empty($_POST)) {
-foreach ($_POST as $key => $value) {
-    $result[$key] = explode('-', $key);
+  foreach ($_POST as $key => $value) {
+      $result[$key] = explode('-', $key);
+    }
+
+  $testnum = str_replace('_', '.', $result[$key][0]);
+
+  $forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
+  $check = json_decode($forcheck, true);
+
+  if (count($_POST) !== count($check)) {
+    echo 'Вы ответили не на все вопросы. <a href="list.php">Перейти к списку тестов.</a>';
+    exit;
   }
 
-$testnum = str_replace('_', '.', $result[$key][0]);
+  $i = 0;
+  foreach ($_POST as $key => $value) {
 
-$forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
-$check = json_decode($forcheck, true);
-
-if (count($_POST) !== count($check)) {
-  echo 'Вы ответили не на все вопросы. <a href="list.php">Перейти к списку тестов.</a>';
+    if ($value == $check[$i]['trueans']) {
+      echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' верный.<br>';
+    } else {
+      echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' не верный.<br>';
+    }
+    $i++;
+  }
   exit;
-}
-
-//'
-
-$i = 0;
-foreach ($_POST as $key => $value) {
-
-  if ($value == $check[$i]['trueans']) {
-    echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' верный.<br>';
-  } else {
-    echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' не верный.<br>';
-  }
-  $i++;
-}
-exit;
-
 }
 
 $list = scandir('./tests');
@@ -37,7 +34,6 @@ for ($i=2; $i < count($list); $i++) {
       $test = json_decode($json, true);
   }
 }
-
 ?>
 
 <html>
