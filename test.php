@@ -1,35 +1,41 @@
 <?php
 if (!empty($_POST)) {
-  foreach ($_POST as $key => $value) {
-    $result[$key] = explode('-', $value);
+foreach ($_POST as $key => $value) {
+    $result[$key] = explode('-', $key);
   }
-  echo 'Релультаты тестирования:<br><br>';
-  foreach ($result as $key => $value) {
-    if ($value[0] == $value[1]) {
-      echo $value[2].' Ваш ответ: '.$value[0].' верный.<br>';
-    } else {
-      echo $value[2].' Ваш ответ: '.$value[0].' не верный.<br>';
-    }  
-  }
-  echo '<br><a href="admin.php">Вернуться на главную страницу</a><br>';
-  echo '<br><a href="list.php">Перейти к списку загруженных тестов</a><br>';
+
+$testnum = str_replace('_', '.', $result[$key][0]);
+
+$forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
+$check = json_decode($forcheck, true);
+
+if (count($_POST) !== count($check)) {
+  echo 'Вы ответили не на все вопросы. <a href="list.php">Перейти к списку тестов.</a>';
   exit;
 }
 
-switch ($_GET['testnumber']) {
-  case 't1':
-    $json = file_get_contents(__DIR__ . '/tests/onservertest1.json');
-    $test = json_decode($json, true);
-    break;
-  case 't2':
-    $json = file_get_contents(__DIR__ . '/tests/onservertest2.json');
-    $test = json_decode($json, true);
-    break;
-  default:
-  http_response_code(404);
-  echo 'Тест не найден';
-  exit;
-    break;
+//'
+
+$i = 0;
+foreach ($_POST as $key => $value) {
+
+  if ($value == $check[$i]['trueans']) {
+    echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' верный.<br>';
+  } else {
+    echo $check[$i]['q'].' Ваш ответ: '. $_POST[$key].' не верный.<br>';
+  }
+  $i++;
+}
+exit;
+
+}
+
+$list = scandir('./tests');
+for ($i=2; $i < count($list); $i++) {
+    if ($_GET['testnumber'] == $list[$i]) {
+    $json = file_get_contents(__DIR__ . '/tests/' . $list[$i]);
+      $test = json_decode($json, true);
+  }
 }
 
 ?>
@@ -43,10 +49,9 @@ switch ($_GET['testnumber']) {
   <?php foreach ($test as $key => $val) : ?>
     <fieldset>
       <legend><?php echo $val['q'] ?></legend>
-        <label><input type="radio" name="q<?php echo $key+1 ?>" value="<?php echo $val['answer']['res1'].'-'.$val['trueans'].'-'.$val['q'] ?>"><?php echo $val['answer']['res1'] ?></label>
-        <label><input type="radio" name="q<?php echo $key+1 ?>" value="<?php echo $val['answer']['res2'].'-'.$val['trueans'].'-'.$val['q'] ?>"><?php echo $val['answer']['res2'] ?></label>
-        <label><input type="radio" name="q<?php echo $key+1 ?>" value="<?php echo $val['answer']['res3'].'-'.$val['trueans'].'-'.$val['q'] ?>"><?php echo $val['answer']['res3'] ?></label>
-        <label><input type="radio" name="q<?php echo $key+1 ?>" value="<?php echo $val['answer']['res4'].'-'.$val['trueans'].'-'.$val['q'] ?>"><?php echo $val['answer']['res4'] ?></label>
+      <?php foreach ($val['answer'] as $row => $ans) : ?>
+        <label><input type="radio" name="<?php echo $_GET['testnumber'].'-' ?>q<?php echo $key+1 ?>" value="<?php echo $ans ?>"><?php echo $ans ?></label>
+      <?php endforeach; ?>
     </fieldset>
   <?php endforeach; ?>
   <input type="submit" value="Отправить">
