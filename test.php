@@ -5,7 +5,6 @@ if (!empty($_POST)) {
     }
 
   $testnum = str_replace('_', '.', $result[$key][0]);
-
   $forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
   $check = json_decode($forcheck, true);
 
