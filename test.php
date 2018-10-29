@@ -8,23 +8,6 @@ if (!empty($_POST)) {
   $forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
   $check = json_decode($forcheck, true);
 
-/*
-  if (count($_POST) !== count($check)) {
-    echo 'Вы ответили не на все вопросы. <a href="list.php">Перейти к списку тестов.</a>';
-    exit;
-  }
-*/
-/*
-echo '<pre>';
-print_r($_POST);
-print_r($check);
-echo '</pre>';
-
-print_r(substr(key($_POST), 0, -1));
-*/
- 
-
-
   foreach ($check as $key => $value) {
     if (empty($_POST[substr(key($_POST), 0, -1).$key])) {
       echo $check[$key]['q'].' Вы не ответили на этот вопрос.<br>';
