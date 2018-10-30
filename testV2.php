@@ -1,56 +1,47 @@
 <?php
-/*if (empty($_POST['username'])) {
-    echo 'Вы не указали Ваше имя';
-    exit;
-}*/
-
 if (!empty($_POST)) {
-  foreach ($_POST as $key => $value) {
-      $result[$key] = explode('-', $key);
+    if (empty($_POST['username'])) {
+        echo 'Вы не указали Ваше имя! Вернитесь назад';
+        exit;
     }
-/*echo '<pre><br>';
-print_r($_POST);
-echo '<br><br>';
-print_r($result);
-echo '<br></pre>';*/
-
-
-  $testnum = str_replace('_', '.', $result[$key][0]);
-/*echo '<pre><br>';
-print_r($testnum);
-echo '<br><br>';
-print_r($result[$key][0]);
-echo '<br></pre>';*/
-
-  $forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
-  $check = json_decode($forcheck, true);
-
-/*echo '<pre><br>';
-print_r($check);
-echo '<br><br>';
-//print_r($result);
-echo '<br></pre>';*/
-
-
-//видимо этот цикл надо поностью переделать
-  foreach ($check as $key => $value) {
-    if (empty($_POST[substr(key($_POST), 0, -1).$key+1])) {        
-      echo $check[$key]['q'].' Вы не ответили на этот вопрос.<br>';
-    } elseif ($_POST[substr(key($_POST), 0, -1).$key] == $check[$key]['trueans']) {
-      echo $check[$key]['q'].' Ваш ответ: '. $_POST[substr(key($_POST), 0, -1).$key].' верный.<br>';
-    } else {
-      echo $check[$key]['q'].' Ваш ответ: '. $_POST[substr(key($_POST), 0, -1).$key].' не верный.<br>';
+    if (count($_POST) == 1) {
+        echo 'Вы не ответили ни на один вопрос. Вернитесь на предыдущую страницу';
+        exit;
     }
-  }
-  exit;
+
+    foreach ($_POST as $row => $value) {
+      $result[$row] = explode('-', $row);
+    }
+
+    $testnum = str_replace('_', '.', $result[$row][0]);
+
+    $forcheck = file_get_contents(__DIR__ . '/tests/' . $testnum);
+    $check = json_decode($forcheck, true);
+
+    $x = 0;
+    foreach ($check as $key => $value) {
+
+        if (empty($_POST[$result[$row][0].'-'.$key])) {        
+            echo $check[$key]['q'].' Вы не ответили на этот вопрос.<br>';
+        } elseif ($_POST[$result[$row][0].'-'.$key] == $check[$key]['trueans']) {
+                echo $check[$key]['q'].' Ваш ответ: '. $_POST[$result[$row][0].'-'.$key].' верный.<br>';
+                $x = $x + 1;
+            } else {
+                echo $check[$key]['q'].' Ваш ответ: '. $_POST[$result[$row][0].'-'.$key].' не верный.<br>';
+            }
+    }
+
+    $usname = 'СЕРТИФИКАТ выдан студенту: '.$_POST['username'];
+    $res = 'с результатом: Правильных ответов '.$x.' из '.count($check);
+    echo $usname.'<br>';
+    echo $res.'<br>';
+
+    echo '<a href="cert.php?param1='.$usname.'&param2='.$res.'">Получить сертификат</a>';
+        
+    exit;
 }
 
 $list = scandir('./tests');
-
-if (empty($_GET['testnumber']) && empty($_POST['username'])) {
-  echo 'Вы не ответили ни на один вопрос.и (или) не указали Имя. Вернитесь на предыдущую страницу';
-  exit;
-}
 
 for ($i=2; $i < count($list); $i++) {
     if ($_GET['testnumber'] == $list[$i]) {
@@ -77,12 +68,13 @@ if (empty($test)) {
     <fieldset>
       <legend><?php echo $val['q'] ?></legend>
       <?php foreach ($val['answer'] as $row => $ans) : ?>
-        <label><input type="radio" name="<?php echo $_GET['testnumber'].'-' ?>q<?php echo $key ?>" value="<?php echo $ans ?>"><?php echo $ans ?></label>
+        <label><input type="radio" name="<?php echo $_GET['testnumber'].'-' ?><?php echo $key ?>" value="<?php echo $ans ?>"><?php echo $ans ?></label>
       <?php endforeach; ?>
     </fieldset>
   <?php endforeach; ?>
-  
   <input type="submit" value="Отправить">
+
 </form>
+
 </body>
 </html>
