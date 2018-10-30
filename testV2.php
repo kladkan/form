@@ -33,8 +33,6 @@ if (!empty($_POST)) {
 
     $usname = 'СЕРТИФИКАТ выдан студенту: '.$_POST['username'];
     $res = 'с результатом: Правильных ответов '.$x.' из '.count($check);
-    echo $usname.'<br>';
-    echo $res.'<br>';
 
     echo '<a href="cert.php?param1='.$usname.'&param2='.$res.'">Получить сертификат</a>';
         
