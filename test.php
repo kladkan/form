@@ -21,12 +21,24 @@ if (!empty($_POST)) {
 }
 
 $list = scandir('./tests');
+
+if (empty($_GET['testnumber'])) {
+  echo 'Вы не ответили ни на один вопрос.Вернитесь на предыдущую страницу';
+  exit;
+}
+
 for ($i=2; $i < count($list); $i++) {
     if ($_GET['testnumber'] == $list[$i]) {
     $json = file_get_contents(__DIR__ . '/tests/' . $list[$i]);
       $test = json_decode($json, true);
   }
 }
+if (empty($test)) {
+  http_response_code(404);
+  echo 'Теста не существует';
+  exit;
+}
+
 ?>
 
 <html>
