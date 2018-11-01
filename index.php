@@ -1,15 +1,16 @@
 <?php
 session_start();
-
+/*
 if($_GET['exit'] == 'exit') {
     echo 'работает';
-    //unset($_SESSION['name']);
-    unset($_SERVER['PHP_AUTH_USER']); unset($_GET['exit']);
-   
+    unset($_SESSION['name']);
+    unset($_SERVER['PHP_AUTH_USER']);
+    unset($_GET['exit']);
+    session_destroy ();
 
 }
 echo '<a href="index.php?exit=exit">Выход</a>';
-
+*/
 
 //для очистки значения закомментировать раскомментировать следующую строку
 //unset($_SESSION['name']); unset($_SERVER['PHP_AUTH_USER']);
