@@ -7,12 +7,12 @@ if(@$_GET['exit'] == 'exit') {
 echo '<a href="index.php?exit=exit">Выход</a>';
 
 if (!isset($_SESSION['name']) && !empty($_POST['user']) && !empty($_POST['pass'])) {
-    if (!file_exists(__DIR__ . 'core/users/'.$_POST['user'].'.json')) {
+    if (!file_exists(__DIR__ . '/core/users/'.$_POST['user'].'.json')) {
     //echo 'Файл учетной записи не обнаружен';
     header('Location: ./index.php');
     } else {
         //echo 'Файл учетной записи есть';
-        $json = file_get_contents(__DIR__ . 'core/users/'.$_POST['user'].'.json');
+        $json = file_get_contents(__DIR__ . '/core/users/'.$_POST['user'].'.json');
         $user = json_decode($json, true);
     }
     if ($_POST['pass'] === $user[$_POST['user']]) {
