@@ -9,11 +9,11 @@ if ($_SESSION['role'] == 'guest') {
     exit;
   }
 
-if (!file_exists('./tests/')) {
-    mkdir('./tests/');
+if (!file_exists('./downloadedtests/')) {
+    mkdir('./downloadedtests/');
 }
 if (!empty($_FILES['test']['name'])) {
-    move_uploaded_file($_FILES['test']['tmp_name'], './tests/onserver'.$_FILES['test']['name']);
+    move_uploaded_file($_FILES['test']['tmp_name'], './downloadedtests/onserver'.$_FILES['test']['name']);
     echo "Тест успешно загружен.<br>";
     header('Location: ./listV3.php');
 }
