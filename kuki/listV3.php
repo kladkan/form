@@ -1,9 +1,15 @@
 <?php
 session_start();
+if (empty($_SESSION)) {
+    //echo 'никто не авторизован';
+    header('Location: ./index.php');
+}
 
-include 'resources/include/forunauthor.php';
+if (!file_exists('./downloadedtests/')) {
+    mkdir('./downloadedtests/');
+}
 
-$list = scandir('./resources/tests');
+$list = scandir('./downloadedtests');
 
 if (empty($list['2'])) {
     if ($_SESSION['role'] == 'guest') {
@@ -17,7 +23,7 @@ if (empty($list['2'])) {
 }
 
 if (key($_GET) == 'del') {
-    @unlink(__DIR__ . '/resources/tests/' . $_GET['del']);
+    @unlink(__DIR__ . '/downloadedtests/' . $_GET['del']);
 }
 
 echo 'Список доступных тестов:';
@@ -30,10 +36,10 @@ echo 'Список доступных тестов:';
 </head>
 <body>
     <ul>
-    <?php $list = scandir('./resources/tests'); for ($i=2; $i < count($list); $i++) : ?>   
+    <?php $list = scandir('./downloadedtests'); for ($i=2; $i < count($list); $i++) : ?>   
         <li><a href="testV3.php?testnumber=<?php echo $list[$i] ?>">Тест №<?php echo $i-1 ?></a>
             <?php
-                $json = file_get_contents(__DIR__ . '/resources/tests/' . $list[$i]);
+                $json = file_get_contents(__DIR__ . '/downloadedtests/' . $list[$i]);
                 $test = json_decode($json, true);
                 echo ($test['0']['title']);
             ?>
