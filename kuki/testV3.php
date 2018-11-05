@@ -16,7 +16,7 @@ if (!empty($_POST)) {
 
     $testnum = str_replace('_', '.', $result[$row][0]);
 
-    $forcheck = file_get_contents(__DIR__ . '/resources/tests/' . $testnum);
+    $forcheck = file_get_contents(__DIR__ . '/downloadedtests/' . $testnum);
     $check = json_decode($forcheck, true);
 
     $x = 0;
@@ -40,7 +40,7 @@ if (!empty($_POST)) {
     exit;
 }
 
-$list = scandir('./resources/tests');
+$list = scandir('./downloadedtests');
 
 if (empty($_GET['testnumber'])) {
   echo 'Вы не ответили ни на один вопрос.Вернитесь на предыдущую страницу';
@@ -49,7 +49,7 @@ if (empty($_GET['testnumber'])) {
 
 for ($i=2; $i < count($list); $i++) {
     if ($_GET['testnumber'] == $list[$i]) {
-    $json = file_get_contents(__DIR__ . '/resources/tests/' . $list[$i]);
+    $json = file_get_contents(__DIR__ . '/downloadedtests/' . $list[$i]);
       $test = json_decode($json, true);
   }
 }
