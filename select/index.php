@@ -1,6 +1,6 @@
 <?php
 session_start();
-if(@$_GET['exit'] == 'exit') {
+if (isset($_GET['exit'])) {
     session_destroy();
     header('Location: ./index.php');
 }
@@ -25,7 +25,7 @@ if (!isset($_SESSION['user_id'])) {
             }
         if (!empty($row['id'])) { //если существует то
             //echo $row['id'];
-            echo 'Логин: '.$_POST['regname'].' - занят! Зарегистрируйтесь под другим именем.<br><a href="index.php?param=reg">Зарегистрироваться</a>';
+            echo 'Логин: '.$_POST['regname'].' - занят! Зарегистрируйтесь под другим именем.<br><a href="index.php?reg=reg">Зарегистрироваться</a>';
             //unset($_POST);
         } else {
             $stmt = $pdo->prepare("INSERT INTO user (login, password) VALUES (?, ?)");
@@ -41,7 +41,7 @@ if (!isset($_SESSION['user_id'])) {
     }
     if (empty($_POST['authname']) && empty($_POST['authpass'])) {
         if (empty($_POST['regname']) or empty($_POST['regpass'])) {
-            echo '<br>Оба поля обязательны для заполнения!<br><a href="index.php?param=reg">Зарегистрироваться</a><br><br>';
+            echo '<br>Оба поля обязательны для заполнения!<br><a href="index.php?reg=reg">Зарегистрироваться</a><br><br>';
 
         }
     }
@@ -58,7 +58,7 @@ if (!isset($_SESSION['user_id'])) {
         } else {
             echo 'Пользователь не найден или неправильно введён логин/пароль!
             <br><a href="index.php">Войти заново </a> или
-            <br><a href="index.php?param=reg">Зарегистрироваться</a>';
+            <br><a href="index.php?reg=reg">Зарегистрироваться</a>';
             exit;
     
         }
@@ -66,38 +66,40 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 //добавление дела
-if (isset($_SESSION['user_id']) && @$_GET['param'] == 'add_your_task' && !empty($_POST['description'])) {
+if (isset($_SESSION['user_id']) && isset($_GET['add_your_task']) && !empty($_POST['description'])) {
     $stmt = $pdo->prepare("INSERT INTO task (user_id, assigned_user_id, description, date_added) VALUES (?, ?, ?, ?)");
     $stmt->bindParam(1, $_SESSION['user_id']);
     $stmt->bindParam(2, $_SESSION['user_id']);
     $stmt->bindParam(3, $_POST['description']);
-    @$stmt->bindParam(4, date('Y-m-d H:i:s'));
+    $date = date('Y-m-d H:i:s');
+    $stmt->bindParam(4, $date);
     $stmt->execute();
 }
 
 //получение массива ваших дел
-if (isset($_SESSION['user_id']) && @$_GET['param'] == 'echo_your_tasklist') {
-    $sql = "SELECT task.description as Дела, task.date_added as Дата, task.is_done as 'Выполнено/Невыполнено', user.login as Автор, task.assigned_user_id as Исполнитель, task.id as 'Удаление дела'
-    FROM task JOIN user ON user.id=task.user_id /*and user.id=task.assigned_user_id (после вставки этого критерия в списке ваших дел не будут отображаться делегированные дела*/
-    WHERE user_id=$_SESSION[user_id] ORDER BY date_added ASC";
+if (isset($_SESSION['user_id']) && isset($_GET['echo_your_tasklist'])) {
+    $sql = "SELECT task.description as 'Дела', task.date_added as 'Дата', task.is_done as 'Выполнено/Невыполнено', user.login as 'Автор', task.assigned_user_id as 'Исполнитель', task.id as 'Удаление дела'
+    FROM task JOIN user ON user.id=task.user_id 
+    WHERE user_id='$_SESSION[user_id]' ORDER BY date_added ASC";
+
     $all = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     /*echo '<pre>Вывод массива ваших дел:<br>';
     print_r($all);
     echo '</pre>';*/
     if (empty($all)) {
         echo 'Список ваших дел пуст.';
-        header('refresh: 2; url = ./index.php?param=count_task');
+        header('refresh: 2; url = ./index.php?count_task=count_task');
         exit;
     }
     $sqluserlist = "SELECT id, login FROM user";
     $assignedUserList = $pdo->query($sqluserlist)->fetchAll(PDO::FETCH_ASSOC);
-    //echo '<pre>Массив всех пользователей:<br>';
-    //print_r($assignedUserList);
-    //echo '</pre>';
+    /*echo '<pre>Массив всех пользователей:<br>';
+    print_r($assignedUserList);
+    echo '</pre>';*/
 }
 
 //получение массива делегированных дел
-if (isset($_SESSION['user_id']) && @$_GET['param'] == 'echo_assigned_list') {
+if (isset($_SESSION['user_id']) && isset($_GET['echo_assigned_list'])) {
     $sql = "SELECT t.description as Дела, t.date_added as Дата, u.login as Исполнитель
     FROM task t INNER JOIN user u ON u.id=t.assigned_user_id
     WHERE t.user_id=$_SESSION[user_id] OR t.assigned_user_id=$_SESSION[user_id]";
@@ -109,7 +111,7 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'echo_assigned_list') {
     echo '</pre>';*/
     if (empty($all)) {
         echo 'Список делегированных дел пуст.';
-        header('refresh: 2; url = ./index.php?param=count_task');
+        header('refresh: 2; url = ./index.php?count_task=count_task');
         exit;
     }
     $sqluserlist = "SELECT id, login FROM user";
@@ -124,7 +126,7 @@ if (isset($_SESSION['user_id']) && key($_GET) == 'del_task_namder_id') {
     $stmt = $pdo->prepare("DELETE FROM task WHERE user_id=$_SESSION[user_id] AND id=$_GET[del_task_namder_id] LIMIT 1");
     $stmt->execute();
     //echo 'Дело успешно удалено!';
-    header('Location: ./index.php?param=echo_your_tasklist');
+    header('Location: ./index.php?echo_your_tasklist=echo_your_tasklist');
 }
 
 //Переключатель выполнено/невыполнено
@@ -133,7 +135,7 @@ if (isset($_SESSION['user_id']) && isset($_GET['done_on_off'])) {
     $stmt = $pdo->prepare("UPDATE task SET is_done=$_GET[done_on_off] WHERE user_id=$_SESSION[user_id] AND id=$_GET[task_id] LIMIT 1");
     $stmt->execute();
     //echo 'Дело отмечено как выполнено/невыполнено.';
-    header('Location: ./index.php?param=echo_your_tasklist');
+    header('Location: ./index.php?echo_your_tasklist=echo_your_tasklist');
 }
 
 //Делегирование - смена ответственного
@@ -146,11 +148,11 @@ if (isset($_SESSION['user_id']) && isset($_POST['assigned_user_id'])) {
     echo '</pre>';*/
     $stmt = $pdo->prepare("UPDATE task SET assigned_user_id=$_POST[assigned_user_id] WHERE id=$_POST[task_id] AND user_id=$_SESSION[user_id] LIMIT 1");
     $stmt->execute();
-    header('Location: ./index.php?param=echo_your_tasklist');
+    header('Location: ./index.php?echo_your_tasklist=echo_your_tasklist');
 }
 
 //Подсчет количества дел
-if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
+if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
     //print_r($_GET);
     $sql = "SELECT count(*) FROM task t WHERE t.user_id=$_SESSION[user_id] OR t.assigned_user_id=$_SESSION[user_id]";
     $counttask = $pdo->query($sql)->fetch();
@@ -166,7 +168,7 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
     <title>Вход (регистрация)</title>
 </head>
 <body>
-<?php if (@$_GET['param'] == 'reg') : ?>
+<?php if (isset($_GET['reg'])) : ?>
     <?php if (empty($_POST['regname']) && empty($_POST['regpass'])) : ?>
         <form action="index.php" method="POST">
         <fieldset>
@@ -180,12 +182,12 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
     <?php endif ?>
 <?php endif ?>
 
-<?php if (@$_GET['param'] !== 'reg' && !isset($_POST['regname']) && !isset($_POST['regpass']))  : ?>
+<?php if (!isset($_GET['reg']) && !isset($_POST['regname']) && !isset($_POST['regpass']))  : ?>
     <?php if (!isset($_SESSION['user_id'])) : ?>
         <form action="index.php" method="POST">
         <fieldset>
         <legend>ФАРМА ДЛЯ ВХОДА</legend>
-            <p>Чтобы войти, введите логин и пароль или пройдите<a href="index.php?param=reg"> Регистрацию</a></p>
+            <p>Чтобы войти, введите логин и пароль или пройдите<a href="index.php?reg=reg"> Регистрацию</a></p>
             <p>Логин: <input type="text" name="authname"></p>
             <p>Пароль: <input type="password" name="authpass"></p>
             <p><input type="submit" value="Войти"> 
@@ -195,10 +197,10 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
 <?php endif ?>
 
 <?php if (isset($_SESSION['user_id'])) : ?>
-    <p><a href="index.php?param=add_your_task">Добавить дело</a> || <a href="index.php?param=echo_your_tasklist">Вывод списка ваших дел(отсортированных по дате)</a> || <a href="index.php?param=echo_assigned_list">Показать делегированные дела</a> || <a href="index.php?param=count_task">Вывести количество дел</a></p>
+    <p><a href="index.php?add_your_task=add_your_task">Добавить дело</a> || <a href="index.php?echo_your_tasklist=echo_your_tasklist">Вывод списка ваших дел(отсортированных по дате)</a> || <a href="index.php?echo_assigned_list=echo_assigned_list">Показать делегированные дела</a> || <a href="index.php?count_task=count_task">Вывести количество дел</a></p>
 
-    <?php if (@$_GET['param'] == 'add_your_task') : ?>
-    <form action="index.php?param=add_your_task" method="POST">
+    <?php if (isset($_GET['add_your_task'])) : ?>
+    <form action="index.php?add_your_task=add_your_task" method="POST">
         <fieldset>
         <legend>Форма для добавления нового вашего дела</legend>    
             <p>Описание: <input type="text" size="100" name="description"></p>
@@ -208,10 +210,10 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
     <?php if (!empty($_POST['description'])) {echo 'Задача "'.$_POST['description'].'" добавлена.';} ?>
     <?php endif ?>
 
-    <?php if (@$_GET['param'] == 'echo_your_tasklist' OR @$_GET['param'] == 'echo_assigned_list') : ?>
+    <?php if (isset($_GET['echo_your_tasklist']) OR isset($_GET['echo_assigned_list'])) : ?>
         <table width="" border="1" cellpadding="4" cellspacing="0">
         <tr>
-            <?php foreach (@$all['0'] as $colname => $var) : ?>
+            <?php foreach ($all['0'] as $colname => $var) : ?>
                 <th><?php echo $colname?></th>
             <?php endforeach; ?>
         </tr>
@@ -229,12 +231,15 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
                         if ($key == 'Удаление дела') {
                             echo '<a href="index.php?del_task_namder_id='.$value.'">Удалить</a>';
                         }
-                        if ($key !== 'Выполнено/Невыполнено' && $key !== 'Удаление дела') {
+                        // Добавить условие
+                        if ($key !== 'Выполнено/Невыполнено'  && $key !== 'Удаление дела') {
                             echo $value;
                         }
+
+
                         ?>
                         <?php if ($key == 'Автор') : ?>
-                            <form action="index.php?param=echo_your_tasklist" method="POST">
+                            <form action="index.php?echo_your_tasklist=echo_your_tasklist" method="POST">
                             <input name="task_id" type="hidden" value="<?= $row['Удаление дела'] ?>"> 
                             <select name="assigned_user_id">
                             <?php foreach ($assignedUserList as $assignedUser): ?>
@@ -246,6 +251,13 @@ if (isset($_SESSION['user_id']) && @$_GET['param'] == 'count_task') {
                             </select>
                             <button type="submit">Делегировать</button>
                             </form>
+                        <?php endif ?>
+                        <?php if ($key == 'Исполнитель') : ?>
+                            <?php foreach ($assignedUserList as $assignedUser): ?>
+                                <?php if ($row['Исполнитель'] == $assignedUser['id']):?>
+                                    <?= $assignedUser['login'] ?>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
                         <?php endif ?>
                     </td>
                 <?php endforeach; ?>
