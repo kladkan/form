@@ -231,11 +231,18 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
                         if ($key == 'Удаление дела') {
                             echo '<a href="index.php?del_task_namder_id='.$value.'">Удалить</a>';
                         }
-                        // Добавить условие
-                        if ($key !== 'Выполнено/Невыполнено'  && $key !== 'Удаление дела') {
-                            echo $value;
+
+                        if (isset($_GET['echo_your_tasklist'])) {
+                            if ($key !== 'Выполнено/Невыполнено' && $key !== 'Исполнитель' && $key !== 'Удаление дела') {
+                                echo $value;
+                            }
                         }
 
+                        if (isset($_GET['echo_assigned_list'])) {
+                            if ($key !== 'Выполнено/Невыполнено'  && $key !== 'Удаление дела') {
+                                echo $value;
+                            }
+                        }
 
                         ?>
                         <?php if ($key == 'Автор') : ?>
