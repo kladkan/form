@@ -78,8 +78,8 @@ if (isset($_SESSION['user_id']) && isset($_GET['add_your_task']) && !empty($_POS
 
 //получение массива ваших дел
 if (isset($_SESSION['user_id']) && isset($_GET['echo_your_tasklist'])) {
-    $sql = "SELECT task.description as 'Дела', task.date_added as 'Дата', task.is_done as 'Выполнено/Невыполнено', user.login as 'Автор', task.assigned_user_id as 'Исполнитель', task.id as 'Удаление дела'
-    FROM task JOIN user ON user.id=task.user_id 
+    $sql = "SELECT task.description as 'Дела', task.date_added as 'Дата', task.is_done as 'Выполнено/Невыполнено', user.login as 'Автор', u.login as 'Исполнитель', task.id as 'Удаление дела'
+    FROM task JOIN user ON user.id=task.user_id JOIN user u ON u.id=task.assigned_user_id 
     WHERE user_id='$_SESSION[user_id]' ORDER BY date_added ASC";
 
     $all = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
@@ -227,14 +227,8 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
                             echo '<a href="indexNetology.php?del_task_namder_id='.$value.'">Удалить</a>';
                         }
 
-                        if (isset($_GET['echo_your_tasklist'])) {
-                            if ($key !== 'Выполнено/Невыполнено' && $key !== 'Исполнитель' && $key !== 'Удаление дела') {
-                                echo $value;
-                            }
-                        }
-
-                        if (isset($_GET['echo_assigned_list'])) {
-                            if ($key !== 'Выполнено/Невыполнено'  && $key !== 'Удаление дела') {
+                        if (isset($_GET['echo_your_tasklist']) or isset($_GET['echo_assigned_list'])) {
+                            if ($key !== 'Выполнено/Невыполнено' &&  $key !== 'Удаление дела') {
                                 echo $value;
                             }
                         }
@@ -253,13 +247,6 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
                             </select>
                             <button type="submit">Делегировать</button>
                             </form>
-                        <?php endif ?>
-                        <?php if ($key == 'Исполнитель') : ?>
-                            <?php foreach ($assignedUserList as $assignedUser): ?>
-                                <?php if ($row['Исполнитель'] == $assignedUser['id']):?>
-                                    <?= $assignedUser['login'] ?>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
                         <?php endif ?>
                     </td>
                 <?php endforeach; ?>
