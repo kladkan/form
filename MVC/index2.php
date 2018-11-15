@@ -251,27 +251,22 @@ function count_task()
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Вход (регистрация)</title>
+    <title></title>
 </head>
 <body>
 
 <?php if (isset($_SESSION['user_id'])) : ?>
-<!-- можно убрать позже это меню -->
+
+<!-- можно убрать позже это меню т.к. оно реализовано в файле resources/menu_for_user.php -->
     <p><a href="index2.php?exit=exit">Выход</a></p>
     <p><?= $_SESSION['user_login'] ?></p>
     <hr>
     <p><a href="index2.php?add_your_task=add_your_task">Добавить дело</a> || <a href="index2.php?echo_your_tasklist=echo_your_tasklist">Вывод списка ваших дел(отсортированных по дате)</a> || <a href="index2.php?echo_assigned_list=echo_assigned_list">Показать делегированные дела</a> || <a href="index2.php?count_task=count_task">Вывести количество дел</a></p>
-<!-- -->
+
     <?php if (isset($_GET['count_task'])) :?>
         <p>Подсчет количества дел: <?= $counttask[0]?></p>
     <?php endif ?>
 
-<!--
-    <?php if (isset($_GET['add_your_task'])) : ?>
-        
-        
-    <?php endif ?>
--->
     <?php if (isset($_GET['echo_your_tasklist']) OR isset($_GET['echo_assigned_list'])) : ?>
         <table width="" border="1" cellpadding="4" cellspacing="0">
         <tr>
