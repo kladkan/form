@@ -215,45 +215,54 @@ if (isset($_POST['question'])) {
 <?php endif ?>
 
 
-<!--Добавить вопрос (пока для всех, возможно надо оставить только для пользователей)-->
-<?php if (!isset($_GET['ask_question'])) : ?>
-    <p><a href="index.php?ask_question=ask_question">Задать вопрос</a></p>
-<?php endif ?>
-<!--Форма для нового вопроса-->
-<?php if (isset($_GET['ask_question'])) : ?>
-    <form action="index.php" method="POST">
-        <fieldset>
-        <legend>Новый вопрос</legend>
-            <p>Все поля обязательны для заполнения</p>
-            <p>Ваше имя: <input type="text" size="50" name="author_name"></p>
-            <p>E-mail: <input type="text" size="50" name="e-mail"></p>
-            <p>Выберите тему:
-                <select name="theme_id">
-                <?php foreach ($themes as $theme) : ?>
-                    <option value="<?= $theme['id'] ?>"><?= $theme['theme'] ?></option>
-                <?php endforeach ?>
-                </select>
-            </p>
-            <p>Ваш вопрос: <textarea type="text" cols="50" rows="5" name="question"></textarea></p>
-            <button type="submit">Задать</button>
-        </fieldset>
-    </form>
+<!--Для пользователей-->
+<?php if (!isset($_SESSION['admin_login'])) : ?>
+
+    <!--Вывод тем-->
+    <fieldset>
+        <legend>Список тем:</legend>
+        <table width="" border="1" cellpadding="4" cellspacing="0">
+            <tr>
+                <th>Тема</th>
+            </tr>
+            <?php foreach ($themes as $theme) : ?>    
+            <tr>
+                <td><?= $theme['theme']?></td>
+            </tr>
+            <?php endforeach ?>
+        </table>
+    </fieldset>
+
+    <!--Кнопка для вопроса-->
+    <?php if (!isset($_GET['ask_question'])) : ?>
+        <p><a href="index.php?ask_question=ask_question">Задать вопрос</a></p>
+    <?php endif ?>
+
+    <!--Форма для нового вопроса-->
+    <?php if (isset($_GET['ask_question'])) : ?>
+        <form action="index.php" method="POST">
+            <fieldset>
+            <legend>Новый вопрос</legend>
+                <p>Все поля обязательны для заполнения</p>
+                <p>Ваше имя: <input type="text" size="50" name="author_name"></p>
+                <p>E-mail: <input type="text" size="50" name="e-mail"></p>
+                <p>Выберите тему:
+                    <select name="theme_id">
+                    <?php foreach ($themes as $theme) : ?>
+                        <option value="<?= $theme['id'] ?>"><?= $theme['theme'] ?></option>
+                    <?php endforeach ?>
+                    </select>
+                </p>
+                <p>Ваш вопрос: <textarea type="text" cols="50" rows="5" name="question"></textarea></p>
+                <button type="submit">Задать</button>
+            </fieldset>
+        </form>
+    <?php endif ?>
 <?php endif ?>
 
-<!--Вывод тем для пользователей-->
-<fieldset>
-    <legend>Список тем:</legend>
-    <table width="" border="1" cellpadding="4" cellspacing="0">
-        <tr>
-            <th>Тема</th>
-        </tr>
-        <?php foreach ($themes as $theme) : ?>    
-        <tr>
-            <td><?= $theme['theme']?></td>
-        </tr>
-        <?php endforeach ?>
-    </table>
-</fieldset>
+
+
+
 
 </body>
 </html>
