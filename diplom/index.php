@@ -86,7 +86,25 @@ if (isset($_SESSION['admin_login'])) {
 //Получение списка тем (для всех)
 $sql = "SELECT * FROM `themes`";
 $themes = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+echo '<pre>'; print_r($themes); echo '</pre>';
 
+//подсчет количества вопросов в теме
+foreach ($themes as $theme) {
+    $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` JOIN `themes` ON themes.id=questions.theme_id WHERE `theme_id`='{$theme['id']}' GROUP BY `theme_id`";
+    $count_all_ques_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    if ($count_all_ques_array) {
+        foreach ($count_all_ques_array as $count_all_ques) {
+        }
+    } else {
+        $count_all_ques['Вопросов в теме'] = 0;
+    }
+    $themes2[] = array('id' => $theme['id'], 'theme' => $theme['theme'], 'Вопросов в теме' => $count_all_ques['Вопросов в теме']);
+}
+echo '<pre>'; print_r($count_all_ques_array); echo '</pre>';
+echo '<pre>'; print_r($themes2); echo '</pre>';
+
+
+//Добавление вопроса
 if (isset($_POST['question'])) {
     $stmt = $pdo->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme_id`, `question`) VALUES (?, ?, ?, ?)");
     $stmt->bindParam(1, $_POST['author_name']);
@@ -95,7 +113,6 @@ if (isset($_POST['question'])) {
     $stmt->bindParam(4, $_POST['question']);
     $stmt->execute();
 }
-
 ?>
 
 
@@ -202,11 +219,13 @@ if (isset($_POST['question'])) {
             <tr>
                 <th>Тема</th>
                 <th>Удаление</th>
+                <th>Вопросов в теме</th>
             </tr>
-            <?php foreach ($themes as $theme) : ?>    
+            <?php foreach ($themes2 as $theme) : ?>    
             <tr>
                 <td><?= $theme['theme']?></td>
-                <td><a href="index.php?del_theme=<?=$theme['theme']?>">Удалить</a></td>
+                <td><a href="index.php?del_theme=<?=$theme['id']?>">Удалить</a></td>
+                <td><?= $theme['Вопросов в теме']?></td>
             </tr>
             <?php endforeach ?>
         </table>
