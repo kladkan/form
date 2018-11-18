@@ -72,23 +72,28 @@ if (isset($_SESSION['admin_login'])) {
     }
 
 
-    //Создание новой темы...дописать
+    //Создание новой темы
+    if (isset($_POST['new_theme'])) {
+        $stmt = $pdo->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
+        $stmt->bindParam(1, $_POST['new_theme']);
+        $stmt->execute();
+        header('Location: ./index.php');
+    }
+
 
 }
 
-//Получение списка тем
-$sql_theme = "SELECT `theme` FROM `questions`";
+//Получение списка тем (для всех)
+$sql = "SELECT * FROM `themes`";
+$themes = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
-//Добавление вопроса
 if (isset($_POST['question'])) {
-    $stmt = $pdo->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme`, `question`) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme_id`, `question`) VALUES (?, ?, ?, ?)");
     $stmt->bindParam(1, $_POST['author_name']);
     $stmt->bindParam(2, $_POST['e-mail']);
-    $stmt->bindParam(3, $_POST['theme']);
+    $stmt->bindParam(3, $_POST['theme_id']);
     $stmt->bindParam(4, $_POST['question']);
     $stmt->execute();
-
-    echo '<pre>'; print_r($_POST); echo '</pre>';
 }
 
 ?>
@@ -134,10 +139,11 @@ if (isset($_POST['question'])) {
     </form>
 <?php endif ?>
 
-
 <!---->
-<!--Вывод списка администраторов-->
+
+<!--Для авторизованного администратора-->
 <?php if (isset($_SESSION['admin_login'])) : ?>
+    <!--Вывод списка администраторов-->
     <?php if (isset($_GET['list_admin'])) : ?>
     <p>Список администраторов:</p>
     <table width="" border="1" cellpadding="4" cellspacing="0">
@@ -165,27 +171,55 @@ if (isset($_POST['question'])) {
     </table>
     <p><a href="index.php?list_admin=list_admin&add_admin=add_admin">Добавить администратора</a></p>
     <?php endif ?>
+
+    <!--Добавление администратора-->
+    <?php if (isset($_GET['add_admin'])) : ?>
+        <form action="index.php" method="POST">
+            <fieldset>
+            <legend>Новый администратор</legend>
+                <p>Логин: <input type="text" size="50" name="new_login"></p>
+                <p>Пароль: <input type="text" size="50" name="new_password"></p>
+                <p><input type="submit" value="Добавить"></p>
+            </fieldset>
+        </form>
+    <?php endif ?>
+
+    <!--Форма добавление темы-->
+    <?php if (isset($_GET['add_theme'])) : ?>
+        <form action="index.php" method="POST">
+            <fieldset>
+            <legend>Новая тема</legend>
+                <p><input type="text" size="70" name="new_theme"></p>
+                <p><input type="submit" value="Добавить"></p>
+            </fieldset>
+        </form>
+    <?php endif ?>
+
+    <!--Выводим темы-->
+    <fieldset>
+        <legend>Список тем:</legend>
+        <table width="" border="1" cellpadding="4" cellspacing="0">
+            <tr>
+                <th>Тема</th>
+                <th>Удаление</th>
+            </tr>
+            <?php foreach ($themes as $theme) : ?>    
+            <tr>
+                <td><?= $theme['theme']?></td>
+                <td><a href="index.php?del_theme=<?=$theme['theme']?>">Удалить</a></td>
+            </tr>
+            <?php endforeach ?>
+        </table>
+        <a href="index.php?add_theme=add_theme">Добавить тему...</a>
+    </fieldset>
 <?php endif ?>
 
 
-<!--Добавление администратора-->
-<?php if (isset($_GET['add_admin'])) : ?>
-    <form action="index.php" method="POST">
-        <fieldset>
-        <legend>Новый администратор</legend>
-            <p>Логин: <input type="text" size="50" name="new_login"></p>
-            <p>Пароль: <input type="text" size="50" name="new_password"></p>
-            <p><input type="submit" value="Добавить"></p>
-        </fieldset>
-    </form>
-<?php endif ?>
-
-
-<!--Добавить вопрос-->
+<!--Добавить вопрос (пока для всех, возможно надо оставить только для пользователей)-->
 <?php if (!isset($_GET['ask_question'])) : ?>
     <p><a href="index.php?ask_question=ask_question">Задать вопрос</a></p>
 <?php endif ?>
-
+<!--Форма для нового вопроса-->
 <?php if (isset($_GET['ask_question'])) : ?>
     <form action="index.php" method="POST">
         <fieldset>
@@ -194,26 +228,31 @@ if (isset($_POST['question'])) {
             <p>Ваше имя: <input type="text" size="50" name="author_name"></p>
             <p>E-mail: <input type="text" size="50" name="e-mail"></p>
             <p>Выберите тему:
-                <select name="theme">
-                <?php foreach ($pdo->query($sql_theme) as $themes) : ?>
-                    <option value="<?= $themes['theme'] ?>"><?= $themes['theme'] ?></option>
+                <select name="theme_id">
+                <?php foreach ($themes as $theme) : ?>
+                    <option value="<?= $theme['id'] ?>"><?= $theme['theme'] ?></option>
                 <?php endforeach ?>
                 </select>
             </p>
             <p>Ваш вопрос: <textarea type="text" cols="50" rows="5" name="question"></textarea></p>
-            <p><input type="submit" value="Задать"></p>
+            <button type="submit">Задать</button>
         </fieldset>
     </form>
 <?php endif ?>
 
-<!--Вывод тем-->
+<!--Вывод тем для пользователей-->
 <fieldset>
     <legend>Список тем:</legend>
-    <ul>
-        <?php foreach ($pdo->query($sql_theme) as $themes) : ?>    
-        <li><?= $themes['theme'] ?>
+    <table width="" border="1" cellpadding="4" cellspacing="0">
+        <tr>
+            <th>Тема</th>
+        </tr>
+        <?php foreach ($themes as $theme) : ?>    
+        <tr>
+            <td><?= $theme['theme']?></td>
+        </tr>
         <?php endforeach ?>
-    </ul>
+    </table>
 </fieldset>
 
 </body>
