@@ -7,9 +7,50 @@ if (isset($_GET['exit'])) {
 
 $pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
 
+//Проверка существования таблицы
+$get_table = "describe `admins`";
+if ($pdo->query($get_table) == FALSE) { //если таблицы с админами нет, то создаем её
+    $stmt = $pdo->prepare("CREATE TABLE `admins` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `login` varchar(50) NOT NULL,
+        `password` varchar(150) NOT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+    $stmt->execute();
+
+    //Создаем администратора по умолчанию
+    $stmt = $pdo->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
+    $x = 'admin';
+    $stmt->bindParam(1, $x);
+    $stmt->bindParam(2, $x);
+    $stmt->execute();
+
+    //создаем таблицу где будут храниться вопросы и ответы
+    $stmt = $pdo->prepare("CREATE TABLE `questions` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `theme_id` int(11) NOT NULL,
+        `question` varchar(5000) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+        `answer` varchar(5000) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+        `published` int(11) NOT NULL DEFAULT '0',
+        `author_name` char(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+        `e-mail` char(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+        `date_added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+    $stmt->execute();
+
+    //создаем таблицу с темами
+    $stmt = $pdo->prepare("CREATE TABLE `themes` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `theme` varchar(100) NOT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+    $stmt->execute();
+}
+
 //Авторизация для администраторов
 if (!empty($_POST['authname']) && !empty($_POST['authpass'])) {
-    $sql = "SELECT `id` FROM admins WHERE `login`='{$_POST['authname']}' AND `password`='{$_POST['authpass']}'";
+    $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['authname']}' AND `password`='{$_POST['authpass']}'";
     foreach ($pdo->query($sql) as $admin) {
     }
 
@@ -149,39 +190,43 @@ $sql = "SELECT * FROM `themes`";
 $themes = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 //echo '<pre>'; print_r($themes); echo '</pre>';
 
-foreach ($themes as $theme) {
-    //подсчет вопросов в теме
-    $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` WHERE `theme_id`='{$theme['id']}' GROUP BY `theme_id`";
-    $count_all_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    if ($count_all_ques_in_theme_array) {
-        foreach ($count_all_ques_in_theme_array as $count_all_ques) {
+if (!empty($themes)) {
+    foreach ($themes as $theme) {
+        //подсчет вопросов в теме
+        $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` WHERE `theme_id`='{$theme['id']}' GROUP BY `theme_id`";
+        $count_all_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($count_all_ques_in_theme_array) {
+            foreach ($count_all_ques_in_theme_array as $count_all_ques) {
+            }
+        } else {
+            $count_all_ques['Вопросов в теме'] = 0;
         }
-    } else {
-        $count_all_ques['Вопросов в теме'] = 0;
-    }
 
-    //подсчет опубликованных вопросов в теме
-     $sql = "SELECT COUNT(*) AS 'Опубликовано вопросов' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND `published`=1 GROUP BY `theme_id`";
-     $count_published_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    if ($count_published_ques_in_theme_array) {
-        foreach ($count_published_ques_in_theme_array as $count_published_ques) {
+        //подсчет опубликованных вопросов в теме
+        $sql = "SELECT COUNT(*) AS 'Опубликовано вопросов' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND `published`=1 GROUP BY `theme_id`";
+        $count_published_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($count_published_ques_in_theme_array) {
+            foreach ($count_published_ques_in_theme_array as $count_published_ques) {
+            }
+        } else {
+            $count_published_ques['Опубликовано вопросов'] = 0;
         }
-    } else {
-        $count_published_ques['Опубликовано вопросов'] = 0;
-    }
-    
-    //подсчет вопросов без ответа в теме
-    $sql = "SELECT COUNT(*) AS 'Вопросов без ответа' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND (`answer` IS NULL OR `answer`='') GROUP BY `theme_id`";
-    $count_unanswered_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    if ($count_unanswered_ques_in_theme_array) {
-        foreach ($count_unanswered_ques_in_theme_array as $count_unanswered_ques) {
+        
+        //подсчет вопросов без ответа в теме
+        $sql = "SELECT COUNT(*) AS 'Вопросов без ответа' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND (`answer` IS NULL OR `answer`='') GROUP BY `theme_id`";
+        $count_unanswered_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($count_unanswered_ques_in_theme_array) {
+            foreach ($count_unanswered_ques_in_theme_array as $count_unanswered_ques) {
+            }
+        } else {
+            $count_unanswered_ques['Вопросов без ответа'] = 0;
         }
-    } else {
-        $count_unanswered_ques['Вопросов без ответа'] = 0;
-    }
 
-    //Создаем новый массив и добавляем данные из запросов
-    $themes2[] = array('id' => $theme['id'], 'theme' => $theme['theme'], 'Вопросов в теме' => $count_all_ques['Вопросов в теме'], 'Опубликовано вопросов' => $count_published_ques['Опубликовано вопросов'], 'Вопросов без ответа' => $count_unanswered_ques['Вопросов без ответа']);
+        //Создаем новый массив и добавляем данные из запросов
+        $themes2[] = array('id' => $theme['id'], 'theme' => $theme['theme'], 'Вопросов в теме' => $count_all_ques['Вопросов в теме'], 'Опубликовано вопросов' => $count_published_ques['Опубликовано вопросов'], 'Вопросов без ответа' => $count_unanswered_ques['Вопросов без ответа']);
+    }
+} else {
+    $themes2 = 0;
 }
 //echo '<pre>'; print_r($count_published_ques_in_theme_array); echo '</pre>';
 //echo '<pre>'; print_r($themes2); echo '</pre>';
@@ -222,6 +267,7 @@ if (isset($_POST['question'])) {
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <title>Сервис вопросов и ответов</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
@@ -237,6 +283,7 @@ if (isset($_POST['question'])) {
         <ul>
             <li><a href="index.php?list_admin=list_admin">Список админов</a></li>
             <li><a href="index.php?unans_questions=unans_questions">Список вопросов без ответов</a></li>
+            <li><a href="index.php?add_theme=add_theme">Добавить тему...</a></li>
         </ul>
     </fieldset>
 <?php endif ?>
@@ -318,51 +365,53 @@ if (isset($_POST['question'])) {
 
 
 <!--Выводим темы для пользователей и для админов-->
-<?php if (isset($_SESSION['admin_login'])) : ?>
-    <fieldset>
-        <legend>Список тем:</legend>
-        <table width="" border="1" cellpadding="4" cellspacing="0">
-            <tr>
-                <th>Тема</th>
-                <?php if (isset($_SESSION['admin_login'])) : ?>
-                    <th>Удаление темы со всеми вопросами</th>
-                    <th>Вопросов в теме</th>
-                    <th>Опубликовано вопросов</th>
-                    <th>Вопросов без ответа</th>
-                <?php endif ?>
-            </tr>
-            <?php foreach ($themes2 as $theme) : ?>    
-            <tr>
-                <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
-                <?php if (isset($_SESSION['admin_login'])) : ?>
-                    <td><a href="index.php?del_theme=<?=$theme['id']?>">Удалить</a></td>
-                    <td><?= $theme['Вопросов в теме']?></td>
-                    <td><?= $theme['Опубликовано вопросов']?></td>
-                    <td><?= $theme['Вопросов без ответа']?></td>
-                <?php endif ?>
-            </tr>
-            <?php endforeach ?>
-        </table>
-        <?php if (isset($_SESSION['admin_login'])) : ?>
-            <a href="index.php?add_theme=add_theme">Добавить тему...</a>
-        <?php endif ?>
-    </fieldset>
-<?php else : ?>
-    <fieldset>
+<?php if ($themes2 != 0) : ?>
+    <?php if (isset($_SESSION['admin_login'])) : ?><!--Для админов-->
+        <fieldset>
             <legend>Список тем:</legend>
             <table width="" border="1" cellpadding="4" cellspacing="0">
                 <tr>
                     <th>Тема</th>
+                    <?php if (isset($_SESSION['admin_login'])) : ?>
+                        <th>Удаление темы со всеми вопросами</th>
+                        <th>Вопросов в теме</th>
+                        <th>Опубликовано вопросов</th>
+                        <th>Вопросов без ответа</th>
+                    <?php endif ?>
                 </tr>
+                
                 <?php foreach ($themes2 as $theme) : ?>    
                 <tr>
-                    <?php if ($theme['Вопросов в теме'] <> $theme['Вопросов без ответа']) : ?>
-                        <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
+                    <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
+                    <?php if (isset($_SESSION['admin_login'])) : ?>
+                        <td><a href="index.php?del_theme=<?=$theme['id']?>">Удалить</a></td>
+                        <td><?= $theme['Вопросов в теме']?></td>
+                        <td><?= $theme['Опубликовано вопросов']?></td>
+                        <td><?= $theme['Вопросов без ответа']?></td>
                     <?php endif ?>
                 </tr>
                 <?php endforeach ?>
             </table>
         </fieldset>
+    <?php else : ?> <!--Для пользователей-->
+        <fieldset>
+            <legend>Список тем:</legend>
+                <table width="" border="1" cellpadding="4" cellspacing="0">
+                    <tr>
+                        <th>Тема</th>
+                    </tr>
+                    <?php foreach ($themes2 as $theme) : ?>    
+                    <tr>
+                        <?php if ($theme['Вопросов в теме'] <> $theme['Вопросов без ответа'] OR $theme['Опубликовано вопросов'] <> 0) : ?>
+                            <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
+                        <?php endif ?>
+                    </tr>
+                    <?php endforeach ?>
+                </table>
+            </fieldset>
+    <?php endif ?>
+<?php else :?>
+    <p>Список тем пуст! Только администраторы могу добавлять темы.</p>
 <?php endif ?>
 
 <!--Выводим вопросы для пользователей и для админов-->
@@ -373,7 +422,7 @@ if (isset($_POST['question'])) {
         <fieldset>
             <legend>Список всех вопросов в теме:</legend>
             <?php if (empty($questions)) : ?>
-                <p>В этой теме вопросов нет. Выберите другую тему.</p>
+                <p>В этой теме вопросов нет.</p>
             <?php else : ?>
                 <table width="" border="1" cellpadding="4" cellspacing="0">
                     <tr>
@@ -421,7 +470,7 @@ if (isset($_POST['question'])) {
                 </tr>
                 <?php foreach ($questions as $question) : ?>
                     <tr>
-                        <?php if ($question['answer'] !== NULL OR $question['answer'] !=''): ?>
+                        <?php if ($question['answer'] !== NULL && $question['answer'] !='' && $question['published'] != 0) : ?>
                             <td><?=$question['theme']?></td>
                             <td><a href="index.php?show_question_id=<?=$question['id']?>&show_questions_theme=<?=$question['theme_id']?>"><?=$question['question']?></a></td>
                         <?php endif ?>
@@ -589,9 +638,14 @@ if (isset($_POST['question'])) {
 <?php if (!isset($_SESSION['admin_login'])) : ?>
 
     <!--Кнопка для вопроса-->
-    <?php if (!isset($_GET['ask_question'])) : ?>
-        <p><a href="index.php?ask_question=ask_question">Задать вопрос</a></p>
+    <?php if (isset($theme)) : ?><!--если темы существуют то показываем кнопку "задать вопрос"-->
+        <?php if (!isset($_GET['ask_question'])) : ?>
+            <p><a href="index.php?ask_question=ask_question">Задать вопрос</a></p>
+        <?php endif ?>
+    <?php else : ?>
+        <p>Задать вопрос невозможно! Попросите администратора создать тему(темы).</p>
     <?php endif ?>
+
 
     <!--Форма для нового вопроса-->
     <?php if (isset($_GET['ask_question'])) : ?>
