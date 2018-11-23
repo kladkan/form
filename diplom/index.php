@@ -4,10 +4,8 @@ if (isset($_GET['exit'])) {
     session_destroy();
     header('Location: ./index.php');
 }
-
-$pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
 //Начальная версия Дипломной работы. Просто поместить этот файл из резервной папки в папку diplom
-$pdo = new PDO("mysql:host=localhost; dbname=netology01; charset=utf8","root","fg2018start");
+$pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
 
 //Проверка существования таблицы
 $get_table = "describe `admins`";
