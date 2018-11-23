@@ -6,6 +6,8 @@ if (isset($_GET['exit'])) {
 }
 
 $pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
+//Начальная версия Дипломной работы. Просто поместить этот файл из резервной папки в папку diplom
+$pdo = new PDO("mysql:host=localhost; dbname=netology01; charset=utf8","root","fg2018start");
 
 //Проверка существования таблицы
 $get_table = "describe `admins`";
@@ -29,8 +31,8 @@ if ($pdo->query($get_table) == FALSE) { //если таблицы с админ�
     $stmt = $pdo->prepare("CREATE TABLE `questions` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `theme_id` int(11) NOT NULL,
-        `question` varchar(5000) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-        `answer` varchar(5000) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+        `question` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+        `answer` text CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
         `published` int(11) NOT NULL DEFAULT '0',
         `author_name` char(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
         `e-mail` char(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -55,8 +57,8 @@ if (!empty($_POST['authname']) && !empty($_POST['authpass'])) {
     }
 
     if (!empty($admin['id'])) {
-        $_SESSION['admin_id'] = $admin['id'];
-        $_SESSION['admin_login'] = $_POST['authname'];
+        $_SESSION['adminId'] = $admin['id'];
+        $_SESSION['adminLogin'] = $_POST['authname'];
 
     } else {
         //include 'includes/empty_admin.php';
@@ -67,121 +69,121 @@ if (!empty($_POST['authname']) && !empty($_POST['authpass'])) {
 }
 
 
-if (isset($_SESSION['admin_login'])) {
+if (isset($_SESSION['adminLogin'])) {
     //Получение списка администраторов
-    if (isset($_GET['list_admin'])) {
+    if (isset($_GET['listAdmin'])) {
         $sql = "SELECT `login`, `password` FROM `admins`";
         $admins = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         //echo '<pre>'; print_r($admins); echo '</pre>';
     }
 
     //Добавление администратора
-    if (isset($_POST['new_login']) && isset($_POST['new_password'])) {
-        if (empty($_POST['new_login']) or empty($_POST['new_password'])) {
+    if (isset($_POST['newLogin']) && isset($_POST['newPassword'])) {
+        if (empty($_POST['newLogin']) or empty($_POST['newPassword'])) {
             echo 'Вы пропустили пароль или логин! Вернитесь назад.';
             exit;
         } else {
             //echo '<pre>'; print_r($_POST); echo '</pre>';
-            $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['new_login']}'";
+            $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['newLogin']}'";
             foreach ($pdo->query($sql) as $admin) {
             }
 
             if (!empty($admin['id'])) {
-                echo 'Логин: '.$_POST['new_login'].' - занят! Придумайте уникальное имя.<br>';
+                echo 'Логин: '.$_POST['newLogin'].' - занят! Придумайте уникальное имя.<br>';
             } else {
                 $stmt = $pdo->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
-                $stmt->bindParam(1, $_POST['new_login']);
-                $stmt->bindParam(2, $_POST['new_password']);
+                $stmt->bindParam(1, $_POST['newLogin']);
+                $stmt->bindParam(2, $_POST['newPassword']);
                 $stmt->execute();
-                header('Location: ./index.php?list_admin=list_admin');
+                header('Location: ./index.php?listAdmin=listAdmin');
             }
         }
     }
 
     //Изменение пароля администратора
-    if (isset($_POST['change_password'])) {
-        $stmt = $pdo->prepare("UPDATE `admins` SET `password`='{$_POST['change_password']}' WHERE `login`='{$_GET['login']}' LIMIT 1");
+    if (isset($_POST['changePassword'])) {
+        $stmt = $pdo->prepare("UPDATE `admins` SET `password`='{$_POST['changePassword']}' WHERE `login`='{$_GET['login']}' LIMIT 1");
         $stmt->execute();
-        header('Location: ./index.php?list_admin=list_admin');
+        header('Location: ./index.php?listAdmin=listAdmin');
     }
 
     //Удаление администратора
-    if (isset($_GET['del_admin'])) {
-        $stmt = $pdo->prepare("DELETE FROM `admins` WHERE `login`='{$_GET['del_admin']}' LIMIT 1");
+    if (isset($_GET['delAdmin'])) {
+        $stmt = $pdo->prepare("DELETE FROM `admins` WHERE `login`='{$_GET['delAdmin']}' LIMIT 1");
         $stmt->execute();
-        header('Location: ./index.php?list_admin=list_admin');
+        header('Location: ./index.php?listAdmin=listAdmin');
     }
 
     //Добавление новой темы
-    if (isset($_POST['new_theme'])) {
+    if (isset($_POST['newTheme'])) {
         $stmt = $pdo->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
-        $stmt->bindParam(1, $_POST['new_theme']);
+        $stmt->bindParam(1, $_POST['newTheme']);
         $stmt->execute();
         header('Location: ./index.php');
     }
 
     //Удаление темы со всеми вопросами
-    if (isset($_GET['del_theme'])) {
-        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `theme_id`='{$_GET['del_theme']}';
-        DELETE FROM `themes` WHERE `id`='{$_GET['del_theme']}'");
+    if (isset($_GET['delTheme'])) {
+        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `theme_id`='{$_GET['delTheme']}';
+        DELETE FROM `themes` WHERE `id`='{$_GET['delTheme']}'");
         $stmt->execute();
         header('Location: ./index.php');
     }
     
     //Переключатель опубликован/неопубликован
-    if (isset($_GET['published_on_off']) OR isset($_POST['change_answer'])) {
-        if (isset($_POST['change_answer']) && !isset($_POST['publish'])) {
-            $_GET['published_on_off'] = 0;
-            //$_GET['question_id'] = $_GET['show_question_id'];
+    if (isset($_GET['publishedOnOff']) OR isset($_POST['changeAnswer'])) {
+        if (isset($_POST['changeAnswer']) && !isset($_POST['publish'])) {
+            $_GET['publishedOnOff'] = 0;
+            //$_GET['questionId'] = $_GET['showQuestionId'];
         }
         if (isset($_POST['publish'])) {
-            $_GET['published_on_off'] = 1;
-            //$_GET['question_id'] = $_GET['show_question_id'];
+            $_GET['publishedOnOff'] = 1;
+            //$_GET['questionId'] = $_GET['showQuestionId'];
         }
-        $stmt = $pdo->prepare("UPDATE `questions` SET `published`='{$_GET['published_on_off']}' WHERE `id`='{$_GET['show_question_id']}' LIMIT 1");
+        $stmt = $pdo->prepare("UPDATE `questions` SET `published`='{$_GET['publishedOnOff']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
-        //header('Location: ./index.php?show_questions_theme='.$_GET['questions_theme_id']);
+        //header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Удаление вопроса из темы
-    if (isset($_GET['del_question_id'])) {
-        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `id`='{$_GET['del_question_id']}'");
+    if (isset($_GET['delQuestionId'])) {
+        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `id`='{$_GET['delQuestionId']}'");
         $stmt->execute();
-        header('Location: ./index.php?show_questions_theme='.$_GET['questions_theme_id']);
+        header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Изменение автора
-    if (isset($_POST['change_author_name'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `author_name`='{$_POST['change_author_name']}' WHERE `id`='{$_GET['show_question_id']}' LIMIT 1");
+    if (isset($_POST['changeAuthorName'])) {
+        $stmt = $pdo->prepare("UPDATE `questions` SET `author_name`='{$_POST['changeAuthorName']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Изменение вопроса
-    if (isset($_POST['change_question'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `question`='{$_POST['change_question']}' WHERE `id`='{$_GET['show_question_id']}' LIMIT 1");
+    if (isset($_POST['changeQuestion'])) {
+        $stmt = $pdo->prepare("UPDATE `questions` SET `question`='{$_POST['changeQuestion']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Изменение ответа
-    if (isset($_POST['change_answer'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `answer`='{$_POST['change_answer']}' WHERE `id`='{$_GET['show_question_id']}' LIMIT 1");
+    if (isset($_POST['changeAnswer'])) {
+        $stmt = $pdo->prepare("UPDATE `questions` SET `answer`='{$_POST['changeAnswer']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Изменение темы
-    if (isset($_POST['change_theme_id'])) {
-        if (!isset($_GET['unans_questions'])) {
-            $_GET['show_questions_theme'] = $_POST['change_theme_id'];
+    if (isset($_POST['changeThemeId'])) {
+        if (!isset($_GET['unansQuestions'])) {
+            $_GET['showQuestionsTheme'] = $_POST['changeThemeId'];
         }
-        $stmt = $pdo->prepare("UPDATE `questions` SET `theme_id`='{$_POST['change_theme_id']}' WHERE `id`='{$_GET['show_question_id']}' LIMIT 1");
+        $stmt = $pdo->prepare("UPDATE `questions` SET `theme_id`='{$_POST['changeThemeId']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Получение всех вопросов без ответа во всех темах в порядке их добавления
-    if (isset($_GET['unans_questions'])) {
+    if (isset($_GET['unansQuestions'])) {
         $sql = "SELECT `questions`.`id`, `theme_id`, `theme`, `question`, `answer`, `published`, `author_name`, `e-mail`, `date_added` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `answer` IS NULL OR `answer`='' ORDER BY `date_added` ASC";
-        $all_unans_questions = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-        //echo '<pre>'; print_r($all_unans_questions); echo '</pre>';
+        $allUnansQuestions = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        //echo '<pre>'; print_r($allUnansQuestions); echo '</pre>';
     }
 }
 
@@ -194,55 +196,55 @@ if (!empty($themes)) {
     foreach ($themes as $theme) {
         //подсчет вопросов в теме
         $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` WHERE `theme_id`='{$theme['id']}' GROUP BY `theme_id`";
-        $count_all_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-        if ($count_all_ques_in_theme_array) {
-            foreach ($count_all_ques_in_theme_array as $count_all_ques) {
+        $countAllQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($countAllQuesInThemeArray) {
+            foreach ($countAllQuesInThemeArray as $countAllQues) {
             }
         } else {
-            $count_all_ques['Вопросов в теме'] = 0;
+            $countAllQues['Вопросов в теме'] = 0;
         }
 
         //подсчет опубликованных вопросов в теме
         $sql = "SELECT COUNT(*) AS 'Опубликовано вопросов' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND `published`=1 GROUP BY `theme_id`";
-        $count_published_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-        if ($count_published_ques_in_theme_array) {
-            foreach ($count_published_ques_in_theme_array as $count_published_ques) {
+        $countPublishedQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($countPublishedQuesInThemeArray) {
+            foreach ($countPublishedQuesInThemeArray as $countPublishedQues) {
             }
         } else {
-            $count_published_ques['Опубликовано вопросов'] = 0;
+            $countPublishedQues['Опубликовано вопросов'] = 0;
         }
         
         //подсчет вопросов без ответа в теме
         $sql = "SELECT COUNT(*) AS 'Вопросов без ответа' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND (`answer` IS NULL OR `answer`='') GROUP BY `theme_id`";
-        $count_unanswered_ques_in_theme_array = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-        if ($count_unanswered_ques_in_theme_array) {
-            foreach ($count_unanswered_ques_in_theme_array as $count_unanswered_ques) {
+        $countUnansweredQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        if ($countUnansweredQuesInThemeArray) {
+            foreach ($countUnansweredQuesInThemeArray as $countUnansweredQues) {
             }
         } else {
-            $count_unanswered_ques['Вопросов без ответа'] = 0;
+            $countUnansweredQues['Вопросов без ответа'] = 0;
         }
 
         //Создаем новый массив и добавляем данные из запросов
-        $themes2[] = array('id' => $theme['id'], 'theme' => $theme['theme'], 'Вопросов в теме' => $count_all_ques['Вопросов в теме'], 'Опубликовано вопросов' => $count_published_ques['Опубликовано вопросов'], 'Вопросов без ответа' => $count_unanswered_ques['Вопросов без ответа']);
+        $themes2[] = array('id' => $theme['id'], 'theme' => $theme['theme'], 'Вопросов в теме' => $countAllQues['Вопросов в теме'], 'Опубликовано вопросов' => $countPublishedQues['Опубликовано вопросов'], 'Вопросов без ответа' => $countUnansweredQues['Вопросов без ответа']);
     }
 } else {
     $themes2 = 0;
 }
-//echo '<pre>'; print_r($count_published_ques_in_theme_array); echo '</pre>';
+//echo '<pre>'; print_r($countPublishedQuesInThemeArray); echo '</pre>';
 //echo '<pre>'; print_r($themes2); echo '</pre>';
 
 //Получение списка вопросов в выбранной теме
-if (isset($_GET['show_questions_theme'])) {
-    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `theme`, `question`, `answer`, `date_added`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `theme_id`='{$_GET['show_questions_theme']}'";
+if (isset($_GET['showQuestionsTheme'])) {
+    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `theme`, `question`, `answer`, `date_added`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `theme_id`='{$_GET['showQuestionsTheme']}'";
     $questions = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     //echo '<pre>'; print_r($questions); echo '</pre>';
 }
 
 //Получение данных вопроса
-if (isset($_GET['show_question_id'])) {
-    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `date_added`, `author_name`, `theme`, `question`, `answer`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `questions`.`id`='{$_GET['show_question_id']}'";
-    $show_question = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    //echo '<pre>'; print_r($show_question); echo '</pre>';
+if (isset($_GET['showQuestionId'])) {
+    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `date_added`, `author_name`, `theme`, `question`, `answer`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `questions`.`id`='{$_GET['showQuestionId']}'";
+    $showQuestion = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    //echo '<pre>'; print_r($showQuestion); echo '</pre>';
 }
 
 
@@ -275,22 +277,22 @@ if (isset($_POST['question'])) {
 
     
 <!--Панель администратора-->
-<?php if (isset($_SESSION['admin_login'])) : ?>
-    <p>Вы вошли как: <?=$_SESSION['admin_login']?></p>
+<?php if (isset($_SESSION['adminLogin'])) : ?>
+    <p>Вы вошли как: <?=$_SESSION['adminLogin']?></p>
     <p><a href="index.php?exit=exit">Выход (прекратить администрирование)</a></p>
     <fieldset>
         <legend>Меню администратора:</legend>
         <ul>
-            <li><a href="index.php?list_admin=list_admin">Список админов</a></li>
-            <li><a href="index.php?unans_questions=unans_questions">Список вопросов без ответов</a></li>
-            <li><a href="index.php?add_theme=add_theme">Добавить тему...</a></li>
+            <li><a href="index.php?listAdmin=listAdmin">Список админов</a></li>
+            <li><a href="index.php?unansQuestions=unansQuestions">Список вопросов без ответов</a></li>
+            <li><a href="index.php?addTheme=addTheme">Добавить тему...</a></li>
         </ul>
     </fieldset>
 <?php endif ?>
 
 
 <!--Для авторизации-->
-<?php if (!isset($_SESSION['admin_id']) && !isset($_GET['admin'])) : ?>
+<?php if (!isset($_SESSION['adminId']) && !isset($_GET['admin'])) : ?>
     <p><a href="index.php?admin=admin">Вход для администраторов</a></p>
 <?php endif ?>
 
@@ -308,9 +310,9 @@ if (isset($_POST['question'])) {
 <!---->
 
 <!--Для авторизованного администратора-->
-<?php if (isset($_SESSION['admin_login'])) : ?>
+<?php if (isset($_SESSION['adminLogin'])) : ?>
     <!--Вывод списка администраторов-->
-    <?php if (isset($_GET['list_admin'])) : ?>
+    <?php if (isset($_GET['listAdmin'])) : ?>
     <p>Список администраторов:</p>
     <table width="" border="1" cellpadding="4" cellspacing="0">
         <tr>
@@ -325,37 +327,37 @@ if (isset($_POST['question'])) {
                     <?= $value?>
                     <?php if ($key == 'password') : ?>
                     <form action="index.php?login=<?=$row['login']?>" method="POST">
-                        <input type="text" size="20" name="change_password">
+                        <input type="text" size="20" name="changePassword">
                         <input type="submit" value="Изменить">
                     </form>
                     <?php endif ?>
                 </td>                
             <?php endforeach ?>
-                <td><a href="index.php?del_admin=<?=$row['login']?>">Удалить</a></td>
+                <td><a href="index.php?delAdmin=<?=$row['login']?>">Удалить</a></td>
         </tr>
         <?php endforeach ?>
     </table>
-    <p><a href="index.php?list_admin=list_admin&add_admin=add_admin">Добавить администратора</a></p>
+    <p><a href="index.php?listAdmin=listAdmin&addAdmin=addAdmin">Добавить администратора</a></p>
     <?php endif ?>
 
     <!--Форма для добавления администратора-->
-    <?php if (isset($_GET['add_admin'])) : ?>
+    <?php if (isset($_GET['addAdmin'])) : ?>
         <form action="index.php" method="POST">
             <fieldset>
                 <legend>Новый администратор</legend>
-                <p>Логин: <input type="text" size="50" name="new_login"></p>
-                <p>Пароль: <input type="text" size="50" name="new_password"></p>
+                <p>Логин: <input type="text" size="50" name="newLogin"></p>
+                <p>Пароль: <input type="text" size="50" name="newPassword"></p>
                 <p><input type="submit" value="Добавить"></p>
             </fieldset>
         </form>
     <?php endif ?>
 
     <!--Форма добавление темы-->
-    <?php if (isset($_GET['add_theme'])) : ?>
+    <?php if (isset($_GET['addTheme'])) : ?>
         <form action="index.php" method="POST">
             <fieldset>
                 <legend>Новая тема</legend>
-                <p><input type="text" size="70" name="new_theme"></p>
+                <p><input type="text" size="70" name="newTheme"></p>
                 <p><input type="submit" value="Добавить"></p>
             </fieldset>
         </form>
@@ -366,13 +368,13 @@ if (isset($_POST['question'])) {
 
 <!--Выводим темы для пользователей и для админов-->
 <?php if ($themes2 != 0) : ?>
-    <?php if (isset($_SESSION['admin_login'])) : ?><!--Для админов-->
+    <?php if (isset($_SESSION['adminLogin'])) : ?><!--Для админов-->
         <fieldset>
             <legend>Список тем:</legend>
             <table width="" border="1" cellpadding="4" cellspacing="0">
                 <tr>
                     <th>Тема</th>
-                    <?php if (isset($_SESSION['admin_login'])) : ?>
+                    <?php if (isset($_SESSION['adminLogin'])) : ?>
                         <th>Удаление темы со всеми вопросами</th>
                         <th>Вопросов в теме</th>
                         <th>Опубликовано вопросов</th>
@@ -382,9 +384,9 @@ if (isset($_POST['question'])) {
                 
                 <?php foreach ($themes2 as $theme) : ?>    
                 <tr>
-                    <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
-                    <?php if (isset($_SESSION['admin_login'])) : ?>
-                        <td><a href="index.php?del_theme=<?=$theme['id']?>">Удалить</a></td>
+                    <td><a href="index.php?showQuestionsTheme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
+                    <?php if (isset($_SESSION['adminLogin'])) : ?>
+                        <td><a href="index.php?delTheme=<?=$theme['id']?>">Удалить</a></td>
                         <td><?= $theme['Вопросов в теме']?></td>
                         <td><?= $theme['Опубликовано вопросов']?></td>
                         <td><?= $theme['Вопросов без ответа']?></td>
@@ -403,7 +405,7 @@ if (isset($_POST['question'])) {
                     <?php foreach ($themes2 as $theme) : ?>    
                     <tr>
                         <?php if ($theme['Вопросов в теме'] <> $theme['Вопросов без ответа'] OR $theme['Опубликовано вопросов'] <> 0) : ?>
-                            <td><a href="index.php?show_questions_theme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
+                            <td><a href="index.php?showQuestionsTheme=<?=$theme['id']?>"><?= $theme['theme']?></a></td>
                         <?php endif ?>
                     </tr>
                     <?php endforeach ?>
@@ -415,9 +417,9 @@ if (isset($_POST['question'])) {
 <?php endif ?>
 
 <!--Выводим вопросы для пользователей и для админов-->
-<?php if (isset($_GET['show_questions_theme'])) : ?>
+<?php if (isset($_GET['showQuestionsTheme'])) : ?>
 
-    <?php if (isset($_SESSION['admin_login'])) : ?><!--Для админов-->
+    <?php if (isset($_SESSION['adminLogin'])) : ?><!--Для админов-->
 
         <fieldset>
             <legend>Список всех вопросов в теме:</legend>
@@ -436,7 +438,7 @@ if (isset($_POST['question'])) {
                     <?php foreach ($questions as $question) : ?>
                         <tr>
                             <td><?=$question['theme']?></td>
-                            <td><a href="index.php?show_question_id=<?=$question['id']?>&show_questions_theme=<?=$question['theme_id']?>"><?=$question['question']?></a></td>
+                            <td><a href="index.php?showQuestionId=<?=$question['id']?>&showQuestionsTheme=<?=$question['theme_id']?>"><?=$question['question']?></a></td>
                             <td><?=$question['date_added']?></td>
                             <td>
                                 <?php if ($question['answer'] === NULL OR $question['answer'] ==''): ?>
@@ -447,12 +449,12 @@ if (isset($_POST['question'])) {
                             </td>
                             <td>
                                 <?php if ($question['published'] == 1) : ?>
-                                    <p>ДА - <a href="index.php?published_on_off=0&show_question_id=<?=$question['id']?>&show_questions_theme=<?=$question['theme_id']?>">скрыть</a></p>
+                                    <p>ДА - <a href="index.php?publishedOnOff=0&showQuestionId=<?=$question['id']?>&showQuestionsTheme=<?=$question['theme_id']?>">скрыть</a></p>
                                 <?php else : ?>
-                                    <p>НЕТ - <a href="index.php?published_on_off=1&show_question_id=<?=$question['id']?>&show_questions_theme=<?=$question['theme_id']?>">опубликовать</a></p>
+                                    <p>НЕТ - <a href="index.php?publishedOnOff=1&showQuestionId=<?=$question['id']?>&showQuestionsTheme=<?=$question['theme_id']?>">опубликовать</a></p>
                                 <?php endif ?>
                             </td>
-                            <td><a href="index.php?del_question_id=<?=$question['id']?>&questions_theme_id=<?=$question['theme_id']?>">Удалить</a></td>
+                            <td><a href="index.php?delQuestionId=<?=$question['id']?>&questionsThemeId=<?=$question['theme_id']?>">Удалить</a></td>
                         </tr>
                     <?php endforeach ?>
                 </table>
@@ -472,7 +474,7 @@ if (isset($_POST['question'])) {
                     <tr>
                         <?php if ($question['answer'] !== NULL && $question['answer'] !='' && $question['published'] != 0) : ?>
                             <td><?=$question['theme']?></td>
-                            <td><a href="index.php?show_question_id=<?=$question['id']?>&show_questions_theme=<?=$question['theme_id']?>"><?=$question['question']?></a></td>
+                            <td><a href="index.php?showQuestionId=<?=$question['id']?>&showQuestionsTheme=<?=$question['theme_id']?>"><?=$question['question']?></a></td>
                         <?php endif ?>
                     </tr>
                 <?php endforeach ?>
@@ -482,8 +484,8 @@ if (isset($_POST['question'])) {
     <?php endif ?>
 
     <!--Выводим данные вопроса если был запрос-->
-    <?php if (isset($_GET['show_question_id'])) :?>
-        <?php if (isset($_SESSION['admin_login'])) : ?>
+    <?php if (isset($_GET['showQuestionId'])) :?>
+        <?php if (isset($_SESSION['adminLogin'])) : ?>
             <fieldset>
                 <legend>Редактирование вопроса</legend>
                 <table width="" border="1" cellpadding="4" cellspacing="0">
@@ -496,14 +498,14 @@ if (isset($_POST['question'])) {
                         <th>Ожидает ответа</th>
                         <th>Опубликован</th>
                     </tr>
-                    <?php foreach ($show_question as $question_info) : ?>
+                    <?php foreach ($showQuestion as $questionInfo) : ?>
                         <tr>
-                            <td><?= $question_info['date_added'] ?></td>
+                            <td><?= $questionInfo['date_added'] ?></td>
                             <td>
-                                <form action="index.php?show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>" method="POST">
-                                    <select name="change_theme_id">
+                                <form action="index.php?showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>" method="POST">
+                                    <select name="changeThemeId">
                                         <?php foreach ($themes as $theme) : ?>
-                                            <option <?php if ($question_info['theme_id'] == $theme['id']):?>
+                                            <option <?php if ($questionInfo['theme_id'] == $theme['id']):?>
                                                 selected<?php endif ?> value="<?= $theme['id'] ?>">
                                                 <?= $theme['theme'] ?>
                                             </option>
@@ -513,36 +515,36 @@ if (isset($_POST['question'])) {
                                 </form>
                             </td>
                             <td>
-                                <form action="index.php?show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>" method="POST">
-                                    <input type="text" size="" name="change_author_name" value="<?= $question_info['author_name'] ?>">
+                                <form action="index.php?showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>" method="POST">
+                                    <input type="text" size="" name="changeAuthorName" value="<?= $questionInfo['author_name'] ?>">
                                     <input type="submit" value="Изменить">
                                 </form>
                             </td>
                             <td>
-                                <form action="index.php?show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>" method="POST">
-                                    <input type="text" size="" name="change_question" value="<?= $question_info['question'] ?>">
+                                <form action="index.php?showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>" method="POST">
+                                    <input type="text" size="" name="changeQuestion" value="<?= $questionInfo['question'] ?>">
                                     <input type="submit" value="Изменить">
                                 </form>
                             </td>
                             <td>
-                                <form action="index.php?show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>" method="POST">
-                                    <textarea type="text" size="" name="change_answer" value=""><?= $question_info['answer'] ?></textarea>
-                                    <p><input type="checkbox" name="publish" value="<?=$question_info['id']?>">опубликовать</p>
+                                <form action="index.php?showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>" method="POST">
+                                    <textarea type="text" size="" name="changeAnswer" value=""><?= $questionInfo['answer'] ?></textarea>
+                                    <p><input type="checkbox" name="publish" value="<?=$questionInfo['id']?>">опубликовать</p>
                                     <input type="submit" value="Ответить">
                                 </form>
                             </td>
                             <td>
-                                <?php if ($question_info['answer'] === NULL OR $question_info['answer'] ==''): ?>
+                                <?php if ($questionInfo['answer'] === NULL OR $questionInfo['answer'] ==''): ?>
                                     <?='Да'?>
                                 <?php else : ?>
                                     <?='Нет'?>
                                 <?php endif ?>
                             </td>
                             <td>
-                            <?php if ($question_info['published'] == 1) : ?>
-                                    <p>ДА<!-- - <a href="index.php?published_on_off=0&show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>">скрыть</a>--></p>
+                            <?php if ($questionInfo['published'] == 1) : ?>
+                                    <p>ДА<!-- - <a href="index.php?publishedOnOff=0&showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>">скрыть</a>--></p>
                                 <?php else : ?>
-                                    <p>НЕТ<!-- - <a href="index.php?published_on_off=1&show_question_id=<?=$question_info['id']?>&show_questions_theme=<?=$question_info['theme_id']?>">опубликовать</a>--></p>
+                                    <p>НЕТ<!-- - <a href="index.php?publishedOnOff=1&showQuestionId=<?=$questionInfo['id']?>&showQuestionsTheme=<?=$questionInfo['theme_id']?>">опубликовать</a>--></p>
                                 <?php endif ?>
                             </td>
                         </tr>
@@ -557,10 +559,10 @@ if (isset($_POST['question'])) {
                         <th>Вопрос</th>
                         <th>Ответ</th>
                     </tr>
-                    <?php foreach ($show_question as $question_info) : ?>
+                    <?php foreach ($showQuestion as $questionInfo) : ?>
                         <tr>
-                            <td><?= $question_info['question'] ?></td>
-                            <td><?= $question_info['answer'] ?></td>
+                            <td><?= $questionInfo['question'] ?></td>
+                            <td><?= $questionInfo['answer'] ?></td>
                         </tr>
                     <?php endforeach ?>
                 </table>
@@ -570,7 +572,7 @@ if (isset($_POST['question'])) {
 <?php endif ?>
 
 <!--Вывод всех вопросов без ответа во всех темах в порядке их добавления-->
-<?php if (isset($_GET['unans_questions'])) : ?>
+<?php if (isset($_GET['unansQuestions'])) : ?>
         <fieldset>
             <legend>Вопросы без ответа во всех темах</legend>
             <table width="" border="1" cellpadding="4" cellspacing="0">
@@ -583,14 +585,14 @@ if (isset($_POST['question'])) {
                     <th>Автор</th>
                     <th>E-mail автора</th>
                 </tr>
-                <?php foreach ($all_unans_questions as $unans_question) : ?>
+                <?php foreach ($allUnansQuestions as $unansQuestion) : ?>
                     <tr>
-                        <td><?= $unans_question['date_added'] ?></td>
+                        <td><?= $unansQuestion['date_added'] ?></td>
                         <td>
-                            <form action="index.php?show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions" method="POST">
-                                <select name="change_theme_id">
+                            <form action="index.php?showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions" method="POST">
+                                <select name="changeThemeId">
                                     <?php foreach ($themes as $theme) : ?>
-                                        <option <?php if ($unans_question['theme_id'] == $theme['id']):?>
+                                        <option <?php if ($unansQuestion['theme_id'] == $theme['id']):?>
                                             selected<?php endif ?> value="<?= $theme['id'] ?>">
                                             <?= $theme['theme'] ?>
                                         </option>
@@ -600,32 +602,32 @@ if (isset($_POST['question'])) {
                             </form>
                         </td>
                         <td>
-                            <form action="index.php?show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions" method="POST">
-                                <input type="text" size="" name="change_question" value="<?= $unans_question['question'] ?>">
+                            <form action="index.php?showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions" method="POST">
+                                <input type="text" size="" name="changeQuestion" value="<?= $unansQuestion['question'] ?>">
                                 <input type="submit" value="Изменить">
                             </form>
                         </td>
                         <td>
-                            <form action="index.php?show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions" method="POST">
-                                <textarea type="text" size="" name="change_answer" value=""><?= $unans_question['answer'] ?></textarea>
-                                <p><input type="checkbox" name="publish" value="<?=$unans_question['id']?>">опубликовать</p>
+                            <form action="index.php?showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions" method="POST">
+                                <textarea type="text" size="" name="changeAnswer" value=""><?= $unansQuestion['answer'] ?></textarea>
+                                <p><input type="checkbox" name="publish" value="<?=$unansQuestion['id']?>">опубликовать</p>
                                 <input type="submit" value="Ответить">
                             </form>
                         </td>
                         <td>
-                            <?php if ($unans_question['published'] == 1) : ?>
-                                <p>ДА - <a href="index.php?published_on_off=0&show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions">скрыть</a></p>
+                            <?php if ($unansQuestion['published'] == 1) : ?>
+                                <p>ДА - <a href="index.php?publishedOnOff=0&showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions">скрыть</a></p>
                             <?php else : ?>
-                                <p>НЕТ - <a href="index.php?published_on_off=1&show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions">опубликовать</a></p>
+                                <p>НЕТ - <a href="index.php?publishedOnOff=1&showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions">опубликовать</a></p>
                             <?php endif ?>
                         </td>
                         <td>
-                            <form action="index.php?show_question_id=<?=$unans_question['id']?>&unans_questions=unans_questions" method="POST">
-                                <input type="text" size="" name="change_author_name" value="<?= $unans_question['author_name'] ?>">
+                            <form action="index.php?showQuestionId=<?=$unansQuestion['id']?>&unansQuestions=unansQuestions" method="POST">
+                                <input type="text" size="" name="changeAuthorName" value="<?= $unansQuestion['author_name'] ?>">
                                 <input type="submit" value="Изменить">
                             </form>
                         </td>
-                        <td><?= $unans_question['e-mail'] ?></td>
+                        <td><?= $unansQuestion['e-mail'] ?></td>
                     </tr>
                 <?php endforeach ?>
             </table>
@@ -635,7 +637,7 @@ if (isset($_POST['question'])) {
 
 
 <!--Для пользователей-->
-<?php if (!isset($_SESSION['admin_login'])) : ?>
+<?php if (!isset($_SESSION['adminLogin'])) : ?>
 
     <!--Кнопка для вопроса-->
     <?php if (isset($theme)) : ?><!--если темы существуют то показываем кнопку "задать вопрос"-->
