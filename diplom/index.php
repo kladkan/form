@@ -5,30 +5,7 @@ if (isset($_GET['exit'])) {
     header('Location: ./index.php');
 }
 
-function db()
-{
-    static $db = null;
-    if ($db === null) {
-        $config = [
-            'host' => 'localhost',
-            'dbname' => 'ayakovlev',
-            'user' => 'ayakovlev',
-            'pass' => 'neto1880',
-        ];
-        try {
-            $db = new PDO(
-                'mysql:host=' . $config['host'] . ';dbname=' . $config['dbname'] . ';charset=utf8',
-                $config['user'],
-                $config['pass']
-            );
-        } catch (PDOException $e) {
-            die('Database error: ' . $e->getMessage() . '<br/>');
-        }
-    }
-    return $db;
-}
-
-//db() = new PDO("mysql:host=localhost; dbname=netology01; charset=utf8","root","fg2018start");
+include_once 'config.php';//Подключение к базе данных
 
 //создаем Три таблицы для работы программы `admins`, `questions`, `themes`
 //Проверка существования таблицы
@@ -88,11 +65,12 @@ if (!isset($_SESSION['adminLogin'])) {
             $errors['authpass'] = 'Вы не ввели пароль';
         }
         if (count($errors) == 0) {
-            $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['authname']}' AND `password`='{$_POST['authpass']}'";
-            foreach (db()->query($sql) as $admin) {
-            }
-            if (!empty($admin['id'])) {
-                $_SESSION['adminId'] = $admin['id'];
+            $adminAuth = getAdminForAuth([
+                'authname' => $_POST['authname'],
+                'authpass' => $_POST['authpass']
+            ]);
+            if (!empty($adminAuth['id'])) {
+                $_SESSION['adminId'] = $adminAuth['id'];
                 $_SESSION['adminLogin'] = $_POST['authname'];
                 header('Location: index.php');
             } else {
@@ -112,12 +90,10 @@ if (isset($_SESSION['adminLogin'])) {
     //Панель администратора
     include_once 'view/menuForAdmin.php';
     
-    //Работа с администраторами - начало
     //Вывод списка администраторов
     if (isset($_GET['listAdmin'])) {
         //Получение списка администраторов
-        $sql = "SELECT `login`, `password` FROM `admins`";
-        $admins = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $admins = adminsList();
         include_once 'view/adminsList.php';
     }
 
@@ -132,16 +108,15 @@ if (isset($_SESSION['adminLogin'])) {
                 $errors['newPassword'] = 'Вы не указали пароль';
             }
             if (count($errors) == 0) {
-                $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['newLogin']}'";
-                foreach (db()->query($sql) as $admin) {
-                }
-                if (!empty($admin['id'])) {
+                //Поиск администратора перед регистрацией нового
+                $adminOk = getAdminControl($_POST['newLogin']);
+                if (!empty($adminOk['id'])) {
                     include_once 'view/loginForNewAdminNotFree.php';//Логин занят
                 } else {//Добавляем админа
-                    $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
-                    $stmt->bindParam(1, $_POST['newLogin']);
-                    $stmt->bindParam(2, $_POST['newPassword']);
-                    $stmt->execute();
+                    addAdmin([
+                        'newLogin' => $_POST['newLogin'],
+                        'newPassword' => $_POST['newPassword']
+                    ]);
                     header('Location: ./index.php?listAdmin=listAdmin');
                 }
             }
@@ -151,18 +126,20 @@ if (isset($_SESSION['adminLogin'])) {
 
     //Изменение пароля администратора
     if (isset($_POST['changePassword'])) {
-        $stmt = db()->prepare("UPDATE `admins` SET `password`='{$_POST['changePassword']}' WHERE `login`='{$_GET['login']}' LIMIT 1");
-        $stmt->execute();
+        changePassword([
+            'changePassword' => $_POST['changePassword'],
+            'login' => $_GET['login']
+        ]);
         header('Location: ./index.php?listAdmin=listAdmin');
     }
 
     //Удаление администратора
     if (isset($_GET['delAdmin'])) {
-        $stmt = db()->prepare("DELETE FROM `admins` WHERE `login`='{$_GET['delAdmin']}' LIMIT 1");
-        $stmt->execute();
+        delAdmin($_GET['delAdmin']);
         header('Location: ./index.php?listAdmin=listAdmin');
     }
     //работа с администраторами - конец
+
 
     //Работа с вопросами
     //Добавление новой темы
@@ -172,9 +149,7 @@ if (isset($_SESSION['adminLogin'])) {
                 $error = 'Тема не должна быть пустой!';
             }
             if (empty($error)) {
-                $stmt = db()->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
-                $stmt->bindParam(1, $_POST['newTheme']);
-                $stmt->execute();
+                addTheme($_POST['newTheme']);
                 header('Location: ./index.php');
             } 
         }
@@ -183,13 +158,11 @@ if (isset($_SESSION['adminLogin'])) {
 
     //Удаление темы со всеми вопросами
     if (isset($_GET['delTheme'])) {
-        $stmt = db()->prepare("DELETE FROM `questions` WHERE `theme_id`='{$_GET['delTheme']}';
-        DELETE FROM `themes` WHERE `id`='{$_GET['delTheme']}'");
-        $stmt->execute();
+        delTheme($_GET['delTheme']);
         header('Location: ./index.php');
     }
     
-    //Переключатель опубликован/неопубликован
+    //Переключатель опубликован/скрыт
     if (isset($_GET['publishedOnOff']) OR isset($_POST['changeAnswer'])) {
         if (isset($_POST['changeAnswer']) && !isset($_POST['publish'])) {
             $_GET['publishedOnOff'] = 0;
@@ -199,34 +172,41 @@ if (isset($_SESSION['adminLogin'])) {
             $_GET['publishedOnOff'] = 1;
             //$_GET['questionId'] = $_GET['showQuestionId'];
         }
-        $stmt = db()->prepare("UPDATE `questions` SET `published`='{$_GET['publishedOnOff']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
-        $stmt->execute();
+        publishedOnOff([
+            'publishedOnOff' => $_GET['publishedOnOff'],
+            'showQuestionId' => $_GET['showQuestionId']
+        ]);
         //header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Удаление вопроса из темы
     if (isset($_GET['delQuestionId'])) {
-        $stmt = db()->prepare("DELETE FROM `questions` WHERE `id`='{$_GET['delQuestionId']}'");
-        $stmt->execute();
+        delQuestion($_GET['delQuestionId']);
         header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Изменение автора
     if (isset($_POST['changeAuthorName'])) {
-        $stmt = db()->prepare("UPDATE `questions` SET `author_name`='{$_POST['changeAuthorName']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
-        $stmt->execute();
+        changeAuthorName([
+            'changeAuthorName' => $_POST['changeAuthorName'],
+            'showQuestionId' => $_GET['showQuestionId']
+        ]);
     }
 
     //Изменение вопроса
     if (isset($_POST['changeQuestion'])) {
-        $stmt = db()->prepare("UPDATE `questions` SET `question`='{$_POST['changeQuestion']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
-        $stmt->execute();
+        changeQuestion([
+            'changeQuestion' => $_POST['changeQuestion'],
+            'showQuestionId' => $_GET['showQuestionId']
+        ]);
     }
 
     //Изменение ответа
     if (isset($_POST['changeAnswer'])) {
-        $stmt = db()->prepare("UPDATE `questions` SET `answer`='{$_POST['changeAnswer']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
-        $stmt->execute();
+        changeAnswer([
+            'changeAnswer' => $_POST['changeAnswer'],
+            'showQuestionId' => $_GET['showQuestionId']
+        ]);
     }
 
     //Изменение темы
@@ -234,14 +214,16 @@ if (isset($_SESSION['adminLogin'])) {
         if (!isset($_GET['unansQuestions'])) {
             $_GET['showQuestionsTheme'] = $_POST['changeThemeId'];
         }
-        $stmt = db()->prepare("UPDATE `questions` SET `theme_id`='{$_POST['changeThemeId']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
-        $stmt->execute();
+        changeTheme([
+            'changeThemeId' => $_POST['changeThemeId'],
+            'showQuestionId' => $_GET['showQuestionId']
+        ]);
     }
 
     //Получение всех вопросов без ответа во всех темах в порядке их добавления
     if (isset($_GET['unansQuestions'])) {
-        $sql = "SELECT `questions`.`id`, `theme_id`, `theme`, `question`, `answer`, `published`, `author_name`, `e-mail`, `date_added` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `answer` IS NULL OR `answer`='' ORDER BY `date_added` ASC";
-        $allUnansQuestions = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $allUnansQuestions = unansQuestions();
+        $themes = getThemes();
         //echo '<pre>'; print_r($allUnansQuestions); echo '</pre>';
         include_once 'view/unansQuestions.php';
     }
@@ -330,7 +312,7 @@ if (!isset($_SESSION['adminLogin'])) {//Для пользователей
                 $errors['question'] = 'Вы не написали вопрос';
             }
             if (count($errors) == 0) {
-                newQuestion([
+                newQuestion([//Добавление вопроса
                     'author_name' => $_POST['author_name'],
                     'e-mail' => $_POST['e-mail'],
                     'theme_id' => $_POST['theme_id'],
@@ -346,6 +328,59 @@ if (!isset($_SESSION['adminLogin'])) {//Для пользователей
 }
 
 //функции
+//авторизация
+function getAdminForAuth($params)
+{
+    $sql = "SELECT `id` FROM `admins` WHERE `login`='{$params['authname']}' AND `password`='{$params['authpass']}'";
+    foreach (db()->query($sql) as $adminAuth) {
+    }
+   
+    if (isset($adminAuth)) {
+        return $adminAuth;
+    }
+}
+
+//Получение списка администраторов
+function adminsList()
+{
+    $sql = "SELECT `login`, `password` FROM `admins`";
+    $admins = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $admins;
+}
+
+//Поиск администратора перед регистрацией нового
+function getAdminControl($param)
+{
+    $sql = "SELECT `id` FROM `admins` WHERE `login`='$param'";
+    foreach (db()->query($sql) as $adminOk) {
+    }
+    return $adminOk;
+}
+
+//Добавляем админа
+function addAdmin($params)
+{
+    $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
+    $stmt->bindParam(1, $params['newLogin']);
+    $stmt->bindParam(2, $params['newPassword']);
+    $stmt->execute();
+}
+
+//Изменение пароля администратора
+function changePassword($params)
+{
+    $stmt = db()->prepare("UPDATE `admins` SET `password`='{$params['changePassword']}' WHERE `login`='{$params['login']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Удаление администратора
+function delAdmin($param)
+{
+    $stmt = db()->prepare("DELETE FROM `admins` WHERE `login`='$param' LIMIT 1");
+    $stmt->execute();
+}
+
+
 
 //Получение списка тем (для всех)
 function getThemes()
@@ -396,12 +431,78 @@ function showQuestion($param)
 }
 
 //Добавление вопроса
-function newQuestion($param)
+function newQuestion($params)
 {
     $stmt = db()->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme_id`, `question`) VALUES (?, ?, ?, ?)");
     $stmt->bindParam(1, $params['author_name']);
     $stmt->bindParam(2, $params['e-mail']);
     $stmt->bindParam(3, $params['theme_id']);
     $stmt->bindParam(4, $params['question']);
-    return $stmt->execute();
+    $stmt->execute();
+}
+
+//Добавление новой темы
+function addTheme($param)
+{
+    $stmt = db()->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
+    $stmt->bindParam(1, $param);
+    $stmt->execute();
+}
+
+//Удаление темы со всеми вопросами
+function delTheme($param)
+{
+    $stmt = db()->prepare("DELETE FROM `questions` WHERE `theme_id`='$param';
+    DELETE FROM `themes` WHERE `id`='$param'");
+    $stmt->execute();
+}
+
+//Переключатель опубликован/скрыт
+function publishedOnOff($params)
+{
+    $stmt = db()->prepare("UPDATE `questions` SET `published`='{$params['publishedOnOff']}' WHERE `id`='{$params['showQuestionId']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Удаление вопроса из темы
+function delQuestion($param)
+{
+    $stmt = db()->prepare("DELETE FROM `questions` WHERE `id`='{$param}'");
+    $stmt->execute();
+}
+
+//Изменение автора
+function changeAuthorName($params)
+{
+    $stmt = db()->prepare("UPDATE `questions` SET `author_name`='{$params['changeAuthorName']}' WHERE `id`='{$params['showQuestionId']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Изменение вопроса
+function changeQuestion($params)
+{
+    $stmt = db()->prepare("UPDATE `questions` SET `question`='{$params['changeQuestion']}' WHERE `id`='{$params['showQuestionId']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Изменение ответа
+function changeAnswer($params)
+{
+    $stmt = db()->prepare("UPDATE `questions` SET `answer`='{$params['changeAnswer']}' WHERE `id`='{$params['showQuestionId']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Изменение темы
+function changeTheme($params)
+{
+    $stmt = db()->prepare("UPDATE `questions` SET `theme_id`='{$params['changeThemeId']}' WHERE `id`='{$params['showQuestionId']}' LIMIT 1");
+    $stmt->execute();
+}
+
+//Получение всех вопросов без ответа во всех темах в порядке их добавления
+function unansQuestions()
+{
+    $sql = "SELECT `questions`.`id`, `theme_id`, `theme`, `question`, `answer`, `published`, `author_name`, `e-mail`, `date_added` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `answer` IS NULL OR `answer`='' ORDER BY `date_added` ASC";
+    $allUnansQuestions = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $allUnansQuestions;
 }
