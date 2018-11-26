@@ -5,12 +5,36 @@ if (isset($_GET['exit'])) {
     header('Location: ./index.php');
 }
 
-$pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
+function db()
+{
+    static $db = null;
+    if ($db === null) {
+        $config = [
+            'host' => 'localhost',
+            'dbname' => 'ayakovlev',
+            'user' => 'ayakovlev',
+            'pass' => 'neto1880',
+        ];
+        try {
+            $db = new PDO(
+                'mysql:host=' . $config['host'] . ';dbname=' . $config['dbname'] . ';charset=utf8',
+                $config['user'],
+                $config['pass']
+            );
+        } catch (PDOException $e) {
+            die('Database error: ' . $e->getMessage() . '<br/>');
+        }
+    }
+    return $db;
+}
 
+//db() = new PDO("mysql:host=localhost; dbname=netology01; charset=utf8","root","fg2018start");
+
+//создаем Три таблицы для работы программы `admins`, `questions`, `themes`
 //Проверка существования таблицы
 $get_table = "describe `admins`";
-if ($pdo->query($get_table) == FALSE) { //если таблицы с админами нет, то создаем её
-    $stmt = $pdo->prepare("CREATE TABLE `admins` (
+if (db()->query($get_table) == FALSE) { //если таблицы с админами нет, то создаем её и еще две таблицы
+    $stmt = db()->prepare("CREATE TABLE `admins` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `login` varchar(50) NOT NULL,
         `password` varchar(150) NOT NULL,
@@ -19,14 +43,14 @@ if ($pdo->query($get_table) == FALSE) { //если таблицы с админ�
     $stmt->execute();
 
     //Создаем администратора по умолчанию
-    $stmt = $pdo->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
+    $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
     $x = 'admin';
     $stmt->bindParam(1, $x);
     $stmt->bindParam(2, $x);
     $stmt->execute();
 
     //создаем таблицу где будут храниться вопросы и ответы
-    $stmt = $pdo->prepare("CREATE TABLE `questions` (
+    $stmt = db()->prepare("CREATE TABLE `questions` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `theme_id` int(11) NOT NULL,
         `question` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -40,7 +64,7 @@ if ($pdo->query($get_table) == FALSE) { //если таблицы с админ�
     $stmt->execute();
 
     //создаем таблицу с темами
-    $stmt = $pdo->prepare("CREATE TABLE `themes` (
+    $stmt = db()->prepare("CREATE TABLE `themes` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `theme` varchar(100) NOT NULL,
         PRIMARY KEY (`id`)
@@ -65,7 +89,7 @@ if (!isset($_SESSION['adminLogin'])) {
         }
         if (count($errors) == 0) {
             $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['authname']}' AND `password`='{$_POST['authpass']}'";
-            foreach ($pdo->query($sql) as $admin) {
+            foreach (db()->query($sql) as $admin) {
             }
             if (!empty($admin['id'])) {
                 $_SESSION['adminId'] = $admin['id'];
@@ -93,7 +117,7 @@ if (isset($_SESSION['adminLogin'])) {
     if (isset($_GET['listAdmin'])) {
         //Получение списка администраторов
         $sql = "SELECT `login`, `password` FROM `admins`";
-        $admins = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $admins = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         include_once 'view/adminsList.php';
     }
 
@@ -109,12 +133,12 @@ if (isset($_SESSION['adminLogin'])) {
             }
             if (count($errors) == 0) {
                 $sql = "SELECT `id` FROM `admins` WHERE `login`='{$_POST['newLogin']}'";
-                foreach ($pdo->query($sql) as $admin) {
+                foreach (db()->query($sql) as $admin) {
                 }
                 if (!empty($admin['id'])) {
                     include_once 'view/loginForNewAdminNotFree.php';//Логин занят
                 } else {//Добавляем админа
-                    $stmt = $pdo->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
+                    $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
                     $stmt->bindParam(1, $_POST['newLogin']);
                     $stmt->bindParam(2, $_POST['newPassword']);
                     $stmt->execute();
@@ -127,14 +151,14 @@ if (isset($_SESSION['adminLogin'])) {
 
     //Изменение пароля администратора
     if (isset($_POST['changePassword'])) {
-        $stmt = $pdo->prepare("UPDATE `admins` SET `password`='{$_POST['changePassword']}' WHERE `login`='{$_GET['login']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `admins` SET `password`='{$_POST['changePassword']}' WHERE `login`='{$_GET['login']}' LIMIT 1");
         $stmt->execute();
         header('Location: ./index.php?listAdmin=listAdmin');
     }
 
     //Удаление администратора
     if (isset($_GET['delAdmin'])) {
-        $stmt = $pdo->prepare("DELETE FROM `admins` WHERE `login`='{$_GET['delAdmin']}' LIMIT 1");
+        $stmt = db()->prepare("DELETE FROM `admins` WHERE `login`='{$_GET['delAdmin']}' LIMIT 1");
         $stmt->execute();
         header('Location: ./index.php?listAdmin=listAdmin');
     }
@@ -148,7 +172,7 @@ if (isset($_SESSION['adminLogin'])) {
                 $error = 'Тема не должна быть пустой!';
             }
             if (empty($error)) {
-                $stmt = $pdo->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
+                $stmt = db()->prepare("INSERT INTO `themes` (`theme`) VALUES (?)");
                 $stmt->bindParam(1, $_POST['newTheme']);
                 $stmt->execute();
                 header('Location: ./index.php');
@@ -159,7 +183,7 @@ if (isset($_SESSION['adminLogin'])) {
 
     //Удаление темы со всеми вопросами
     if (isset($_GET['delTheme'])) {
-        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `theme_id`='{$_GET['delTheme']}';
+        $stmt = db()->prepare("DELETE FROM `questions` WHERE `theme_id`='{$_GET['delTheme']}';
         DELETE FROM `themes` WHERE `id`='{$_GET['delTheme']}'");
         $stmt->execute();
         header('Location: ./index.php');
@@ -175,33 +199,33 @@ if (isset($_SESSION['adminLogin'])) {
             $_GET['publishedOnOff'] = 1;
             //$_GET['questionId'] = $_GET['showQuestionId'];
         }
-        $stmt = $pdo->prepare("UPDATE `questions` SET `published`='{$_GET['publishedOnOff']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `questions` SET `published`='{$_GET['publishedOnOff']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
         //header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Удаление вопроса из темы
     if (isset($_GET['delQuestionId'])) {
-        $stmt = $pdo->prepare("DELETE FROM `questions` WHERE `id`='{$_GET['delQuestionId']}'");
+        $stmt = db()->prepare("DELETE FROM `questions` WHERE `id`='{$_GET['delQuestionId']}'");
         $stmt->execute();
         header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     //Изменение автора
     if (isset($_POST['changeAuthorName'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `author_name`='{$_POST['changeAuthorName']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `questions` SET `author_name`='{$_POST['changeAuthorName']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Изменение вопроса
     if (isset($_POST['changeQuestion'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `question`='{$_POST['changeQuestion']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `questions` SET `question`='{$_POST['changeQuestion']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Изменение ответа
     if (isset($_POST['changeAnswer'])) {
-        $stmt = $pdo->prepare("UPDATE `questions` SET `answer`='{$_POST['changeAnswer']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `questions` SET `answer`='{$_POST['changeAnswer']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
@@ -210,14 +234,14 @@ if (isset($_SESSION['adminLogin'])) {
         if (!isset($_GET['unansQuestions'])) {
             $_GET['showQuestionsTheme'] = $_POST['changeThemeId'];
         }
-        $stmt = $pdo->prepare("UPDATE `questions` SET `theme_id`='{$_POST['changeThemeId']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
+        $stmt = db()->prepare("UPDATE `questions` SET `theme_id`='{$_POST['changeThemeId']}' WHERE `id`='{$_GET['showQuestionId']}' LIMIT 1");
         $stmt->execute();
     }
 
     //Получение всех вопросов без ответа во всех темах в порядке их добавления
     if (isset($_GET['unansQuestions'])) {
         $sql = "SELECT `questions`.`id`, `theme_id`, `theme`, `question`, `answer`, `published`, `author_name`, `e-mail`, `date_added` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `answer` IS NULL OR `answer`='' ORDER BY `date_added` ASC";
-        $allUnansQuestions = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $allUnansQuestions = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         //echo '<pre>'; print_r($allUnansQuestions); echo '</pre>';
         include_once 'view/unansQuestions.php';
     }
@@ -225,14 +249,13 @@ if (isset($_SESSION['adminLogin'])) {
 
 
 //Получение списка тем (для всех)
-$sql = "SELECT * FROM `themes`";
-$themes = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-//echo '<pre>'; print_r($themes); echo '</pre>';
+$themes = getThemes();
+
 if (!empty($themes)) {
     foreach ($themes as $theme) {
+
         //подсчет вопросов в теме
-        $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` WHERE `theme_id`='{$theme['id']}' GROUP BY `theme_id`";
-        $countAllQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $countAllQuesInThemeArray = countAllQuesInThemeArray($theme['id']);
         if ($countAllQuesInThemeArray) {
             foreach ($countAllQuesInThemeArray as $countAllQues) {
             }
@@ -241,8 +264,7 @@ if (!empty($themes)) {
         }
 
         //подсчет опубликованных вопросов в теме
-        $sql = "SELECT COUNT(*) AS 'Опубликовано вопросов' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND `published`=1 GROUP BY `theme_id`";
-        $countPublishedQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $countPublishedQuesInThemeArray = countPublishedQuesInThemeArray($theme['id']);
         if ($countPublishedQuesInThemeArray) {
             foreach ($countPublishedQuesInThemeArray as $countPublishedQues) {
             }
@@ -251,8 +273,7 @@ if (!empty($themes)) {
         }
         
         //подсчет вопросов без ответа в теме
-        $sql = "SELECT COUNT(*) AS 'Вопросов без ответа' FROM `questions` WHERE `theme_id`='{$theme['id']}' AND (`answer` IS NULL OR `answer`='') GROUP BY `theme_id`";
-        $countUnansweredQuesInThemeArray = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $countUnansweredQuesInThemeArray = countUnansweredQuesInThemeArray($theme['id']);
         if ($countUnansweredQuesInThemeArray) {
             foreach ($countUnansweredQuesInThemeArray as $countUnansweredQues) {
             }
@@ -270,19 +291,14 @@ if (!empty($themes)) {
 //выводим темы для пользователей и для админов
 include_once 'view/themesList.php';
 
-//Получение списка вопросов в выбранной теме
-if (isset($_GET['showQuestionsTheme'])) {
-    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `theme`, `question`, `answer`, `date_added`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `theme_id`='{$_GET['showQuestionsTheme']}'";
-    $questions = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    //echo '<pre>'; print_r($questions); echo '</pre>';
+if (isset($_GET['showQuestionsTheme'])) {//Получение списка вопросов в выбранной теме
+    $questions = questions($_GET['showQuestionsTheme']);
 
     //Выводим вопросы для пользователей и для админов
     include_once 'view/questionsInTheme.php';
 
     if (isset($_GET['showQuestionId'])) {//Получение данных вопроса
-    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `date_added`, `author_name`, `theme`, `question`, `answer`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `questions`.`id`='{$_GET['showQuestionId']}'";
-    $showQuestion = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    //echo '<pre>'; print_r($showQuestion); echo '</pre>';
+    $showQuestion = showQuestion($_GET['showQuestionId']);
 
     //Выводим данные вопроса
     include_once 'view/showQuestionInfo.php';
@@ -290,7 +306,6 @@ if (isset($_GET['showQuestionsTheme'])) {
 }
 
 if (!isset($_SESSION['adminLogin'])) {//Для пользователей
-    //Кнопка для вопроса
     if (isset($theme)) {//если темы существуют то показываем кнопку "задать вопрос"
         if (!isset($_GET['ask_question'])) {
             include_once 'view/buttonForAsk.php';
@@ -315,18 +330,78 @@ if (!isset($_SESSION['adminLogin'])) {//Для пользователей
                 $errors['question'] = 'Вы не написали вопрос';
             }
             if (count($errors) == 0) {
-                $stmt = $pdo->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme_id`, `question`) VALUES (?, ?, ?, ?)");
-                $stmt->bindParam(1, $_POST['author_name']);
-                $stmt->bindParam(2, $_POST['e-mail']);
-                $stmt->bindParam(3, $_POST['theme_id']);
-                $stmt->bindParam(4, $_POST['question']);
-                $stmt->execute();
+                newQuestion([
+                    'author_name' => $_POST['author_name'],
+                    'e-mail' => $_POST['e-mail'],
+                    'theme_id' => $_POST['theme_id'],
+                    'question' => $_POST['question']
+                ]);
                 include_once 'view/thanksForQuestion.php';
                 include_once 'view/buttonForAsk.php';
                 exit;
             }
-
         }
         include_once 'view/formForQuestion.php';
     }
+}
+
+//функции
+
+//Получение списка тем (для всех)
+function getThemes()
+{
+    $sql = "SELECT * FROM `themes`";
+    $themes = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $themes;
+}
+
+//подсчет вопросов в теме
+function countAllQuesInThemeArray($param)
+{
+    $sql = "SELECT COUNT(*) as 'Вопросов в теме' FROM `questions` WHERE `theme_id`='$param' GROUP BY `theme_id`";
+    $countAllQuesInThemeArray = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $countAllQuesInThemeArray;
+}
+
+//подсчет опубликованных вопросов в теме
+function countPublishedQuesInThemeArray($param)
+{
+    $sql = "SELECT COUNT(*) AS 'Опубликовано вопросов' FROM `questions` WHERE `theme_id`='$param' AND `published`=1 GROUP BY `theme_id`";
+    $countPublishedQuesInThemeArray = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $countPublishedQuesInThemeArray;
+}
+
+//подсчет вопросов без ответа в теме
+function countUnansweredQuesInThemeArray($param)
+{
+    $sql = "SELECT COUNT(*) AS 'Вопросов без ответа' FROM `questions` WHERE `theme_id`='$param' AND (`answer` IS NULL OR `answer`='') GROUP BY `theme_id`";
+    $countUnansweredQuesInThemeArray = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $countUnansweredQuesInThemeArray;
+}
+
+//Получение списка вопросов в выбранной теме
+function questions($param)
+{
+    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `theme`, `question`, `answer`, `date_added`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `theme_id`='$param'";
+    $questions = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $questions;
+}
+
+//Получение данных вопроса
+function showQuestion($param)
+{
+    $sql = "SELECT `questions`.`id`,  `questions`.`theme_id`, `date_added`, `author_name`, `theme`, `question`, `answer`, `published` FROM `questions` JOIN `themes` ON `themes`.`id`=`questions`.`theme_id` WHERE `questions`.`id`='$param'";
+    $showQuestion = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    return $showQuestion;
+}
+
+//Добавление вопроса
+function newQuestion($param)
+{
+    $stmt = db()->prepare("INSERT INTO `questions`(`author_name`, `e-mail`, `theme_id`, `question`) VALUES (?, ?, ?, ?)");
+    $stmt->bindParam(1, $params['author_name']);
+    $stmt->bindParam(2, $params['e-mail']);
+    $stmt->bindParam(3, $params['theme_id']);
+    $stmt->bindParam(4, $params['question']);
+    return $stmt->execute();
 }
