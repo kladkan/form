@@ -25,6 +25,8 @@ if (!isset($_SESSION['adminLogin']) && !isset($_GET['admin'])) {
     include_once 'view/enterBattonForAdmin.php';
 }
 
+
+
 //Авторизация
 if (!isset($_SESSION['adminLogin'])) {
     if (count($_POST) > 0) {
@@ -242,7 +244,15 @@ if (!empty($themes)) {
 }
 
 //выводим темы для пользователей и для админов
-include_once 'view/themesList.php';
+if ($themesMoreInfo != 0) {
+    if (isset($_SESSION['adminLogin'])) {
+        include_once 'view/themesListForAdmins.php';
+    } else {
+        include_once 'view/themesListForUsers.php';
+    }
+} else {
+    include_once 'view/themesListEmpty.php';
+}
 
 if (isset($_GET['showQuestionsTheme'])) {//Получение списка вопросов в выбранной теме
     $questions = questions($_GET['showQuestionsTheme']);
@@ -334,6 +344,8 @@ function createQuestionsAnswersTable()//Создаем таблицу вопро
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
     $stmt->execute();
 }
+
+
 
 function createThemesTable() //Создаем таблицу тем
 {
