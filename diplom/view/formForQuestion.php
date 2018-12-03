@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
@@ -10,7 +10,7 @@
             <p><?= $errorValue?></p>
         <?php endforeach ?>
     <?php endif?>
-    <form action="index.php?ask_question=ask_question" method="POST">
+    <form action="index.php?askQuestion=askQuestion" method="POST">
         <fieldset>
             <legend>Новый вопрос</legend>
             <p>Все поля обязательны для заполнения</p>
