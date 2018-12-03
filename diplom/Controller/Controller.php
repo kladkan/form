@@ -115,9 +115,9 @@ class Controller
         if (isset($_GET['showQuestionId'])) {//Получение данных вопроса
         $showQuestion = $questionsTable -> showQuestion($_GET['showQuestionId']);
         //Выводим данные вопроса
+        $controller = new Controller();
+        $themes = $controller -> themesForAll();
         include_once 'View/showQuestionInfo.php';
         }
     }
-
-
 }
