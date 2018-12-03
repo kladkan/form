@@ -8,14 +8,14 @@ if (isset($_GET['exit'])) {
 include_once 'config.php';//Подключение к базе данных функция db()
 
 spl_autoload_register(function ($className) {
-    $file = 'Model/'.strtolower($className) .'.php';
+    $file = __DIR__ .'/Model/'.strtolower($className) .'.php';
     if (file_exists($file)) {
         require_once ($file);
     }
   });
 
 spl_autoload_register(function ($className) {
-    $file = 'Controller/'.strtolower($className) .'.php';
+    $file = __DIR__ .'/Controller/'.strtolower($className) .'.php';
     if (file_exists($file)) {
         require_once ($file);
     }
@@ -105,4 +105,3 @@ if (!isset($_SESSION['adminLogin'])) {//Для пользователей Зад
         $user -> askQuestion();
     }
 }
-
