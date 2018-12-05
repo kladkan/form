@@ -110,7 +110,9 @@ class Controller
                 include_once 'View/themesListForUsers.php';
             }
         } else {
-            include_once 'View/themesListEmpty.php';
+            if (!isset($_GET['admin'])) {
+                include_once 'View/themesListEmpty.php';
+            }
         }
         return $themes;
     }
