@@ -1,7 +1,7 @@
 <?php
 class Administration
 {
-    function listAdmin()
+    public function listAdmin()
     {
         $adminsTable = new AdminsTable();
         //Получение списка администраторов
@@ -9,7 +9,7 @@ class Administration
         include_once 'View/adminsList.php';
     }
 
-    function addAdmin()
+    public function addAdmin()
     {
         $adminsTable = new AdminsTable();
         if (count($_POST) > 0) {
@@ -37,7 +37,7 @@ class Administration
         include_once 'View/addAdmin.php';
     }
 
-    function changePassword()
+    public function changePassword()
     {
         $adminsTable = new AdminsTable();
         $adminsTable -> changePassword([
@@ -47,14 +47,14 @@ class Administration
         header('Location: ./index.php?listAdmin=listAdmin');
     }
 
-    function delAdmin()
+    public function delAdmin()
     {
         $adminsTable = new AdminsTable();
         $adminsTable -> delAdmin($_GET['delAdmin']);
         header('Location: ./index.php?listAdmin=listAdmin');
     }
 
-    function addTheme()
+    public function addTheme()
     {
         $themesTable = new ThemesTable();
         if (count($_POST) > 0) {
@@ -69,7 +69,7 @@ class Administration
         include_once 'View/addTheme.php';
     }
 
-    function delTheme()
+    public function delTheme()
     {
         $themesTable = new ThemesTable();
         $themesTable -> delTheme($_GET['delTheme']);
@@ -78,7 +78,7 @@ class Administration
         header('Location: ./index.php');
     }
 
-    function publishedOnOff()
+    public function publishedOnOff()
     {
         $questionsTable = new QuestionsTable();
         if (isset($_POST['changeAnswer']) && !isset($_POST['publish'])) {
@@ -95,14 +95,14 @@ class Administration
         ]);
     }
 
-    function delQuestionId()
+    public function delQuestionId()
     {
         $questionsTable = new QuestionsTable();
         $questionsTable -> delQuestion($_GET['delQuestionId']);
         header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
-    function changeAuthorName()
+    public function changeAuthorName()
     {
         $questionsTable = new QuestionsTable();
         $questionsTable -> changeAuthorName([
@@ -111,7 +111,7 @@ class Administration
         ]);
     }
 
-    function changeQuestion()
+    public function changeQuestion()
     {
         $questionsTable = new QuestionsTable();
         $questionsTable -> changeQuestion([
@@ -120,7 +120,7 @@ class Administration
         ]);
     }
 
-    function changeAnswer()
+    public function changeAnswer()
     {
         $questionsTable = new QuestionsTable();
         $questionsTable -> changeAnswer([
@@ -129,7 +129,7 @@ class Administration
         ]);
     }
 
-    function changeThemeId()
+    public function changeThemeId()
     {
         $questionsTable = new QuestionsTable();
         if (!isset($_GET['unansQuestions'])) {
@@ -141,7 +141,7 @@ class Administration
         ]);
     }
 
-    function unansQuestions()
+    public function unansQuestions()
     {
         $questionsTable = new QuestionsTable();
         $allUnansQuestions = $questionsTable -> unansQuestions();
