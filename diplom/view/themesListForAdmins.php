@@ -1,6 +1,7 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
+    <title>Сервис вопросов и ответов (режим администрирования)</title>
 </head>
 <body>
     <fieldset>
