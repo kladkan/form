@@ -12,10 +12,7 @@ class Controller
     {   $tablesForStart = new TablesForStart($this->db);
         //Проверка существования таблицы
         if ($this->db->query("describe `admins`") == FALSE) {//если таблицы с админами нет, то создаем её и еще две таблицы
-            $tablesForStart -> createAdminsTable();    
-        }
-
-        if ($this->db->query("describe `admins`") == TRUE) {
+            $tablesForStart -> createAdminsTable();
             $tablesForStart -> createDefaultAdmin();
         }
 
