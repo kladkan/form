@@ -1,9 +1,15 @@
 <?php
 class User
 {
+    private $db;
+    public function __construct($db)
+    {
+        $this->db = $db;
+    }
+
     public function askButton()
     {
-        $controller = new Controller();
+        $controller = new Controller($this->db);
         $theme = $controller -> themesForAll();
         if (isset($theme)) {//если темы существуют то показываем кнопку "задать вопрос"
             if (!isset($_GET['askQuestion'])) {
@@ -16,7 +22,7 @@ class User
 
     public function askQuestion()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         if (count($_POST) > 0) {
             $errors = [];
             if (empty($_POST['author_name'])) {
@@ -43,7 +49,7 @@ class User
                 exit;
             }
         }
-        $controller = new Controller();
+        $controller = new Controller($this->db);
         $themes = $controller -> themesForAll();
         include_once 'View/formForQuestion.php';
     }
