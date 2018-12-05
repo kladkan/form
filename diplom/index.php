@@ -23,14 +23,14 @@ spl_autoload_register(function ($className) {
     }
   });
 
-$controller = new Controller();
+$controller = new Controller($db);
 $controller -> controllerForStart();
 $controller -> controllerAuthorizationForAdmin();
 
 //Для авторизованного администратора
 if (isset($_SESSION['adminLogin'])) {
     include_once 'View/menuForAdmin.php';//Панель администратора
-    $administration = new Administration();
+    $administration = new Administration($db);
     if (isset($_GET['listAdmin'])) {//Вывод списка администраторов
         $administration -> listAdmin();
     }
@@ -100,7 +100,7 @@ if (isset($_GET['showQuestionsTheme'])) {//Получение списка во�
     $controller -> showQuestionsTheme();
 }
 
-$user = new User;
+$user = new User($db);
 if (!isset($_SESSION['adminLogin'])) {//Для пользователей Задать вопрос
     $user -> askButton();
     if (isset($_GET['askQuestion'])) {
