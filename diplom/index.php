@@ -7,15 +7,17 @@ if (isset($_GET['exit'])) {
 
 include_once 'config.php';//Подключение к базе данных функция db()
 
+$db = db();
+
 spl_autoload_register(function ($className) {
-    $file = __DIR__ .'/Model/'.strtolower($className) .'.php';
+    $file = __DIR__ .'/Model/'.$className.'.php';
     if (file_exists($file)) {
         require_once ($file);
     }
   });
 
 spl_autoload_register(function ($className) {
-    $file = __DIR__ .'/Controller/'.strtolower($className) .'.php';
+    $file = __DIR__ .'/Controller/'.$className.'.php';
     if (file_exists($file)) {
         require_once ($file);
     }
