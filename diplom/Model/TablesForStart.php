@@ -1,6 +1,12 @@
 <?php
 class TablesForStart
 {
+    private $db;
+    public function __construct($db)
+    {
+        $this->db = $db;
+    }
+    
     public function createAdminsTable()//Создаем таблицу с админами
     {
         $stmt = $this->db->prepare("CREATE TABLE `admins` (
