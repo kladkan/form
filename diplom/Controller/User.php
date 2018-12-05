@@ -1,7 +1,7 @@
 <?php
 class User
 {
-    function askButton()
+    public function askButton()
     {
         $controller = new Controller();
         $theme = $controller -> themesForAll();
@@ -14,7 +14,7 @@ class User
         }
     }
 
-    function askQuestion()
+    public function askQuestion()
     {
         $questionsTable = new QuestionsTable();
         if (count($_POST) > 0) {
