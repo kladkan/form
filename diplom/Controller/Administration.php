@@ -1,9 +1,16 @@
 <?php
 class Administration
 {
+    private $db;
+
+    public function __construct($db)
+    {
+        $this->db = $db;
+    }
+
     public function listAdmin()
     {
-        $adminsTable = new AdminsTable();
+        $adminsTable = new AdminsTable($this->db);
         //Получение списка администраторов
         $admins = $adminsTable -> adminsList();
         include_once 'View/adminsList.php';
@@ -11,7 +18,7 @@ class Administration
 
     public function addAdmin()
     {
-        $adminsTable = new AdminsTable();
+        $adminsTable = new AdminsTable($this->db);
         if (count($_POST) > 0) {
             $errors = [];
             if (empty($_POST['newLogin'])) {
@@ -39,7 +46,7 @@ class Administration
 
     public function changePassword()
     {
-        $adminsTable = new AdminsTable();
+        $adminsTable = new AdminsTable($this->db);
         $adminsTable -> changePassword([
             'changePassword' => $_POST['changePassword'],
             'login' => $_GET['login']
@@ -49,14 +56,14 @@ class Administration
 
     public function delAdmin()
     {
-        $adminsTable = new AdminsTable();
+        $adminsTable = new AdminsTable($this->db);
         $adminsTable -> delAdmin($_GET['delAdmin']);
         header('Location: ./index.php?listAdmin=listAdmin');
     }
 
     public function addTheme()
     {
-        $themesTable = new ThemesTable();
+        $themesTable = new ThemesTable($this->db);
         if (count($_POST) > 0) {
             if (empty($_POST['newTheme'])) {
                 $error = 'Тема не должна быть пустой!';
@@ -71,16 +78,16 @@ class Administration
 
     public function delTheme()
     {
-        $themesTable = new ThemesTable();
+        $themesTable = new ThemesTable($this->db);
         $themesTable -> delTheme($_GET['delTheme']);
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questionsTable -> delQuestionsInTheme($_GET['delTheme']);
         header('Location: ./index.php');
     }
 
     public function publishedOnOff()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         if (isset($_POST['changeAnswer']) && !isset($_POST['publish'])) {
             $_GET['publishedOnOff'] = 0;
             //$_GET['questionId'] = $_GET['showQuestionId'];
@@ -97,14 +104,14 @@ class Administration
 
     public function delQuestionId()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questionsTable -> delQuestion($_GET['delQuestionId']);
         header('Location: ./index.php?showQuestionsTheme='.$_GET['questionsThemeId']);
     }
 
     public function changeAuthorName()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questionsTable -> changeAuthorName([
             'changeAuthorName' => $_POST['changeAuthorName'],
             'showQuestionId' => $_GET['showQuestionId']
@@ -113,7 +120,7 @@ class Administration
 
     public function changeQuestion()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questionsTable -> changeQuestion([
             'changeQuestion' => $_POST['changeQuestion'],
             'showQuestionId' => $_GET['showQuestionId']
@@ -122,7 +129,7 @@ class Administration
 
     public function changeAnswer()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questionsTable -> changeAnswer([
             'changeAnswer' => $_POST['changeAnswer'],
             'showQuestionId' => $_GET['showQuestionId']
@@ -131,7 +138,7 @@ class Administration
 
     public function changeThemeId()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         if (!isset($_GET['unansQuestions'])) {
             $_GET['showQuestionsTheme'] = $_POST['changeThemeId'];
         }
@@ -143,9 +150,9 @@ class Administration
 
     public function unansQuestions()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $allUnansQuestions = $questionsTable -> unansQuestions();
-        $themesTable = new ThemesTable();
+        $themesTable = new ThemesTable($this->db);
         $themes = $themesTable -> getThemes();
         include_once 'View/unansQuestions.php';
     }
