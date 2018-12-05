@@ -1,7 +1,7 @@
 <?php
 class TablesForStart
 {
-    function createAdminsTable()//Создаем таблицу с админами
+    public function createAdminsTable()//Создаем таблицу с админами
     {
         $stmt = db()->prepare("CREATE TABLE `admins` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -12,7 +12,7 @@ class TablesForStart
         $stmt->execute();
     }
 
-    function createDefaultAdmin()//Создаем администратора по умолчанию
+    public function createDefaultAdmin()//Создаем администратора по умолчанию
     {
         $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
         $x = 'admin';
@@ -21,7 +21,7 @@ class TablesForStart
         $stmt->execute();
     }
 
-    function createQuestionsAnswersTable()//Создаем таблицу вопросов/ответов
+    public function createQuestionsAnswersTable()//Создаем таблицу вопросов/ответов
     {
         $stmt = db()->prepare("CREATE TABLE `questions` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -37,7 +37,7 @@ class TablesForStart
         $stmt->execute();
     }
 
-    function createThemesTable() //Создаем таблицу тем
+    public function createThemesTable() //Создаем таблицу тем
     {
         $stmt = db()->prepare("CREATE TABLE `themes` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
