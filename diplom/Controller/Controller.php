@@ -1,7 +1,7 @@
 <?php
 class Controller
 {
-    function controllerForStart()
+    public function controllerForStart()
     {   $tablesForStart = new TablesForStart();
         //Проверка существования таблицы
         if (db()->query("describe `admins`") == FALSE) {//если таблицы с админами нет, то создаем её и еще две таблицы
@@ -15,7 +15,7 @@ class Controller
         }
     }
 
-    function controllerAuthorizationForAdmin()
+    public function controllerAuthorizationForAdmin()
     {
         $adminsTable = new AdminsTable();
         //кнопка вызова формы входа для админов
@@ -106,7 +106,7 @@ class Controller
         return $themes;
     }
 
-    function showQuestionsTheme()
+    public function showQuestionsTheme()
     {
         $questionsTable = new QuestionsTable();
         $questions = $questionsTable -> questions($_GET['showQuestionsTheme']);
