@@ -1,23 +1,30 @@
 <?php
 class Controller
-{
+{   
+    private $db;
+
+    public function __construct($db)
+    {
+        $this->db = $db;
+    }
+
     public function controllerForStart()
-    {   $tablesForStart = new TablesForStart();
+    {   $tablesForStart = new TablesForStart($this->db);
         //Проверка существования таблицы
-        if (db()->query("describe `admins`") == FALSE) {//если таблицы с админами нет, то создаем её и еще две таблицы
+        if ($this->db->query("describe `admins`") == FALSE) {//если таблицы с админами нет, то создаем её и еще две таблицы
             $tablesForStart -> createAdminsTable();
         }
-        if (db()->query("describe `questions`") == FALSE) {
+        if ($this->db->query("describe `questions`") == FALSE) {
             $tablesForStart -> createQuestionsAnswersTable();
         }
-        if (db()->query("describe `themes`") == FALSE) {
+        if ($this->db->query("describe `themes`") == FALSE) {
             $tablesForStart -> createThemesTable();
         }
     }
 
     public function controllerAuthorizationForAdmin()
     {
-        $adminsTable = new AdminsTable();
+        $adminsTable = new AdminsTable($this->db);
         //кнопка вызова формы входа для админов
         if (!isset($_SESSION['adminLogin']) && !isset($_GET['admin'])) {
             include_once 'View/enterBattonForAdmin.php';
@@ -56,12 +63,12 @@ class Controller
 
     public function themesForAll()
     {
-        $themesTable = new ThemesTable();
+        $themesTable = new ThemesTable($this->db);
         //Получение списка тем (для всех)
         $themes = $themesTable -> getThemes();
         if (!empty($themes)) {
             foreach ($themes as $theme) {
-                $questionsTable = new QuestionsTable();
+                $questionsTable = new QuestionsTable($this->db);
                 //подсчет вопросов в теме
                 $countAllQuesInThemeArray = $questionsTable -> countAllQuesInThemeArray($theme['id']);
                 if ($countAllQuesInThemeArray) {
@@ -108,14 +115,14 @@ class Controller
 
     public function showQuestionsTheme()
     {
-        $questionsTable = new QuestionsTable();
+        $questionsTable = new QuestionsTable($this->db);
         $questions = $questionsTable -> questions($_GET['showQuestionsTheme']);
         //Выводим вопросы для пользователей и для админов
         include_once 'View/questionsInTheme.php';
         if (isset($_GET['showQuestionId'])) {//Получение данных вопроса
         $showQuestion = $questionsTable -> showQuestion($_GET['showQuestionId']);
         //Выводим данные вопроса
-        $controller = new Controller();
+        $controller = new Controller($this->db);
         $themes = $controller -> themesForAll();
         include_once 'View/showQuestionInfo.php';
         }
