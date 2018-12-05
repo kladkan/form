@@ -3,7 +3,7 @@ class TablesForStart
 {
     public function createAdminsTable()//Создаем таблицу с админами
     {
-        $stmt = db()->prepare("CREATE TABLE `admins` (
+        $stmt = $this->db->prepare("CREATE TABLE `admins` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
             `login` varchar(50) NOT NULL,
             `password` varchar(150) NOT NULL,
@@ -14,7 +14,7 @@ class TablesForStart
 
     public function createDefaultAdmin()//Создаем администратора по умолчанию
     {
-        $stmt = db()->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO `admins`(`login`, `password`) VALUES (?, ?)");
         $x = 'admin';
         $stmt->bindParam(1, $x);
         $stmt->bindParam(2, $x);
@@ -23,7 +23,7 @@ class TablesForStart
 
     public function createQuestionsAnswersTable()//Создаем таблицу вопросов/ответов
     {
-        $stmt = db()->prepare("CREATE TABLE `questions` (
+        $stmt = $this->db->prepare("CREATE TABLE `questions` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
             `theme_id` int(11) NOT NULL,
             `question` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -39,7 +39,7 @@ class TablesForStart
 
     public function createThemesTable() //Создаем таблицу тем
     {
-        $stmt = db()->prepare("CREATE TABLE `themes` (
+        $stmt = $this->db->prepare("CREATE TABLE `themes` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
             `theme` varchar(100) NOT NULL,
             PRIMARY KEY (`id`)
