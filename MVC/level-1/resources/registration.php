@@ -5,7 +5,13 @@
     <title>Регистрация</title>
 </head>
 <body>
-    <form action="index2.php" method="POST">
+    <?php if (!empty($errors)) : ?>
+        <p><?= 'Ошибка регистрации:' ?>
+        <?php foreach ($errors as $errorName => $errorValue) : ?>
+            <p><?= $errorValue?></p>
+        <?php endforeach ?>
+    <?php endif?>
+    <form action="index2.php?reg=reg" method="POST">
         <fieldset>
         <legend>РЕГИСТРАЦИЯ</legend>
             <p>Для регистрации, введите логин и пароль. Если вы зарегистрированы, выполните <a href="index2.php">вход.</a></p>

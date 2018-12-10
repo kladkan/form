@@ -9,6 +9,12 @@ if (isset($_POST['table_name'])) {
     $stmt->execute();
 }
 
+if (isset($_GET['del_table'])) {
+    $pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
+    $stmt = $pdo->prepare("DROP TABLE IF EXISTS `{$_GET['del_table']}`");
+    $stmt->execute();
+}
+
 if (isset($_GET['show_tables'])) {
     $pdo = new PDO("mysql:host=localhost; dbname=ayakovlev; charset=utf8","ayakovlev","neto1880");
     $sql = "show tables";
@@ -78,12 +84,16 @@ $sql = "SELECT t.description as Дела, t.date_added as Дата, u.login as �
         <table width="" border="1" cellpadding="4" cellspacing="0">
             <tr>
                 <th>Названия таблиц<br>(для подробной информации выберите таблицу)</th>
+                <th>Удаление таблицы</th>
             </tr>
             <?php foreach ($tables as $table) : ?>    
             <tr>
                 <?php foreach ($table as $key => $value) : ?>
                     <td>
                         <a href="indexNet.php?describe_table=<?= $value ?>"><?= $value ?></a>
+                    </td>
+                    <td>
+                        <a href="indexNet.php?del_table=<?= $value ?>">Удалить</a>
                     </td>
                 <?php endforeach; ?>
             </tr>

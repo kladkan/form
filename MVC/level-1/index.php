@@ -4,16 +4,15 @@ if (isset($_GET['exit'])) {
     session_destroy();
     header('Location: ./index2.php');
 }
-
 function db()
 {
     static $db = null;
     if ($db === null) {
         $config = [
             'host' => 'localhost',
-            'dbname' => 'ayakovlev',
-            'user' => 'ayakovlev',
-            'pass' => 'neto1880',
+            'dbname' => 'netology01',
+            'user' => 'root',
+            'pass' => 'fg2018start',
         ];
         try {
             $db = new PDO(
@@ -27,13 +26,17 @@ function db()
     }
     return $db;
 }
-
 function render($template)
 {
     include $template;
 }
-
 // КОНТРОЛЛЕР
+
+
+
+
+
+
 
 
 if (!isset($_SESSION['user_id'])) {
@@ -65,12 +68,16 @@ if (!isset($_SESSION['user_id'])) {
     }
 }
 
+
+
+
+
+
 if (isset($_GET['reg'])) {
     if (empty($_POST['regname']) && empty($_POST['regpass'])) {
         render('resources/registration.php');
     }
 }
-
 if (!isset($_GET['reg']) && !isset($_POST['regname']) && !isset($_POST['regpass'])) {
     if (!isset($_SESSION['user_id'])) {
         render('resources/enter.php');
@@ -78,12 +85,13 @@ if (!isset($_GET['reg']) && !isset($_POST['regname']) && !isset($_POST['regpass'
 }
 
 
+
+
 if (isset($_SESSION['user_id'])) {
     
     //добавление дела
     if (isset($_GET['add_your_task'])) {
         render('resources/add_task.php');
-
         if (!empty($_POST['description'])) {
             add_task();
         }
@@ -97,7 +105,6 @@ if (isset($_SESSION['user_id'])) {
             exit;
         }
         userlist();
-
     }
     //получение массива делегированных дел
     if (isset($_GET['echo_assigned_list'])) {
@@ -107,11 +114,7 @@ if (isset($_SESSION['user_id'])) {
             exit;
         }
         userlist();
-
-
     }
-
-
     //удаление дела
     if (key($_GET) == 'del_task_namder_id') {
         del_task();
@@ -133,9 +136,7 @@ if (isset($_SESSION['user_id'])) {
         count_task();
     }
 }
-
 // МОДЕЛЬ
-
 //Проверка существования
 function search_new_user()
 {
@@ -145,7 +146,6 @@ function search_new_user()
         foreach (db()->query($sql) as $reg_user) {
             }
 }
-
 //Добавление пользователя
 function add_user()
 {
@@ -154,7 +154,6 @@ function add_user()
     $stmt->bindParam(2, $_POST['regpass']);
     return $stmt->execute();
 }
-
 //Поиск пользователя
 function search_auth_user()
 {
@@ -164,7 +163,6 @@ function search_auth_user()
         foreach (db()->query($sql) as $auth_user) {
             }
 }
-
 //добавление дела
 function add_task()
 {
@@ -176,7 +174,6 @@ function add_task()
     $stmt->bindParam(4, $date);
     return $stmt->execute();
 }
-
 //Получение списка дел
 function tasklist()
 {
@@ -188,7 +185,6 @@ function tasklist()
     $all = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     return $all;
 }
-
 //Получение списка пользователей
 function userlist()
 {
@@ -198,7 +194,6 @@ function userlist()
     $assignedUserList = db()->query($sqluserlist)->fetchAll(PDO::FETCH_ASSOC);
     return $assignedUserList;
 }
-
 //получение массива делегированных дел
 function assigned_list()
 {
@@ -210,7 +205,6 @@ function assigned_list()
     $all = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     return $all;
 }
-
 //удаление дела
 function del_task()
 {
@@ -218,7 +212,6 @@ function del_task()
     $stmt->execute();
     return $stmt->execute();
 }
-
 //Переключатель выполнено/невыполнено
 function done_on_off()
 {
@@ -226,7 +219,6 @@ function done_on_off()
     $stmt->execute();
     return $stmt->execute();
 }
-
 //Делегирование - смена ответственного
 function assign()
 {
@@ -234,7 +226,6 @@ function assign()
     $stmt->execute();
     return $stmt->execute();
 }
-
 //Подсчет количества дел
 function count_task()
 {
@@ -244,7 +235,6 @@ function count_task()
     $counttask = db()->query($sql)->fetch();
     return $counttask;
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -256,8 +246,6 @@ function count_task()
 <body>
 
 <?php if (isset($_SESSION['user_id'])) : ?>
-
-<!-- можно убрать позже это меню т.к. оно реализовано в файле resources/menu_for_user.php -->
     <p><a href="index2.php?exit=exit">Выход</a></p>
     <p><?= $_SESSION['user_login'] ?></p>
     <hr>

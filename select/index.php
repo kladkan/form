@@ -78,8 +78,8 @@ if (isset($_SESSION['user_id']) && isset($_GET['add_your_task']) && !empty($_POS
 
 //получение массива ваших дел
 if (isset($_SESSION['user_id']) && isset($_GET['echo_your_tasklist'])) {
-    $sql = "SELECT task.description as 'Дела', task.date_added as 'Дата', task.is_done as 'Выполнено/Невыполнено', user.login as 'Автор', task.assigned_user_id as 'Исполнитель', task.id as 'Удаление дела'
-    FROM task JOIN user ON user.id=task.user_id 
+    $sql = "SELECT task.description as 'Дела', task.date_added as 'Дата', task.is_done as 'Выполнено/Невыполнено', user.login as 'Автор', u.login as 'Исполнитель', task.id as 'Удаление дела'
+    FROM task JOIN user ON user.id=task.user_id JOIN user u ON u.id=task.assigned_user_id
     WHERE user_id='$_SESSION[user_id]' ORDER BY date_added ASC";
 
     $all = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
@@ -87,8 +87,7 @@ if (isset($_SESSION['user_id']) && isset($_GET['echo_your_tasklist'])) {
     print_r($all);
     echo '</pre>';*/
     if (empty($all)) {
-        echo 'Список ваших дел пуст.';
-        header('refresh: 2; url = ./index.php?count_task=count_task');
+        header('Location: ./index.php?count_task=count_task');
         exit;
     }
     $sqluserlist = "SELECT id, login FROM user";
@@ -103,15 +102,13 @@ if (isset($_SESSION['user_id']) && isset($_GET['echo_assigned_list'])) {
     $sql = "SELECT t.description as Дела, t.date_added as Дата, u.login as Исполнитель
     FROM task t INNER JOIN user u ON u.id=t.assigned_user_id
     WHERE t.user_id=$_SESSION[user_id] OR t.assigned_user_id=$_SESSION[user_id]";
-
     //SELECT ... FROM task t INNER JOIN user u ON u.id=t.assigned_user_id WHERE t.user_id = ... OR t.assigned_user_id = ...
     $all = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     /*echo '<pre>Вывод массива делегированных дел:<br>';
     print_r($all);
     echo '</pre>';*/
     if (empty($all)) {
-        echo 'Список делегированных дел пуст.';
-        header('refresh: 2; url = ./index.php?count_task=count_task');
+        header('Location: ./index.php?count_task=count_task');
         exit;
     }
     $sqluserlist = "SELECT id, login FROM user";
@@ -125,7 +122,6 @@ if (isset($_SESSION['user_id']) && isset($_GET['echo_assigned_list'])) {
 if (isset($_SESSION['user_id']) && key($_GET) == 'del_task_namder_id') {
     $stmt = $pdo->prepare("DELETE FROM task WHERE user_id=$_SESSION[user_id] AND id=$_GET[del_task_namder_id] LIMIT 1");
     $stmt->execute();
-    //echo 'Дело успешно удалено!';
     header('Location: ./index.php?echo_your_tasklist=echo_your_tasklist');
 }
 
@@ -134,7 +130,6 @@ if (isset($_SESSION['user_id']) && isset($_GET['done_on_off'])) {
     //print_r($_GET);
     $stmt = $pdo->prepare("UPDATE task SET is_done=$_GET[done_on_off] WHERE user_id=$_SESSION[user_id] AND id=$_GET[task_id] LIMIT 1");
     $stmt->execute();
-    //echo 'Дело отмечено как выполнено/невыполнено.';
     header('Location: ./index.php?echo_your_tasklist=echo_your_tasklist');
 }
 
@@ -214,7 +209,7 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
         <table width="" border="1" cellpadding="4" cellspacing="0">
         <tr>
             <?php foreach ($all['0'] as $colname => $var) : ?>
-                <th><?php echo $colname?></th>
+                <th><?= $colname?></th>
             <?php endforeach; ?>
         </tr>
         <?php foreach ($all as $line => $row) : ?>    
@@ -232,14 +227,8 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
                             echo '<a href="index.php?del_task_namder_id='.$value.'">Удалить</a>';
                         }
 
-                        if (isset($_GET['echo_your_tasklist'])) {
-                            if ($key !== 'Выполнено/Невыполнено' && $key !== 'Исполнитель' && $key !== 'Удаление дела') {
-                                echo $value;
-                            }
-                        }
-
-                        if (isset($_GET['echo_assigned_list'])) {
-                            if ($key !== 'Выполнено/Невыполнено'  && $key !== 'Удаление дела') {
+                        if (isset($_GET['echo_your_tasklist']) or isset($_GET['echo_assigned_list'])) {
+                            if ($key !== 'Выполнено/Невыполнено' &&  $key !== 'Удаление дела') {
                                 echo $value;
                             }
                         }
@@ -258,13 +247,6 @@ if (isset($_SESSION['user_id']) && isset($_GET['count_task'])) {
                             </select>
                             <button type="submit">Делегировать</button>
                             </form>
-                        <?php endif ?>
-                        <?php if ($key == 'Исполнитель') : ?>
-                            <?php foreach ($assignedUserList as $assignedUser): ?>
-                                <?php if ($row['Исполнитель'] == $assignedUser['id']):?>
-                                    <?= $assignedUser['login'] ?>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
                         <?php endif ?>
                     </td>
                 <?php endforeach; ?>

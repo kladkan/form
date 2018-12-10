@@ -21,3 +21,15 @@ function db()
     }
     return $db;
 }
+
+
+//////////////////из примера по лекции
+return [
+	'mysql' => [
+		'host' => 'localhost',
+		'dbname' => 'netology',
+		'user' => 'netology',
+		'pass' => 'netology',
+	]
+];
+/////////////////////

@@ -5,6 +5,12 @@
     <title>Авторизация</title>
 </head>
 <body>
+    <?php if (!empty($errors)) : ?>
+        <p><?= 'Ошибка авторизации:' ?>
+        <?php foreach ($errors as $errorName => $errorValue) : ?>
+            <p><?= $errorValue?></p>
+        <?php endforeach ?>
+    <?php endif?>
     <form action="index2.php" method="POST">
         <fieldset>
         <legend>ФАРМА ДЛЯ ВХОДА</legend>
